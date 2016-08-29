@@ -22,15 +22,15 @@ WORKDIR /opencv/build
 RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
 		  -D BUILD_PYTHON_SUPPORT=ON \
 		  -D CMAKE_INSTALL_PREFIX=/usr/local \
-		  -D INSTALL_C_EXAMPLES=ON \
+		  -D INSTALL_C_EXAMPLES=OFF \
 		  -D INSTALL_PYTHON_EXAMPLES=ON \
 		  -D OPENCV_EXTRA_MODULES_PATH=/opencv_contrib/modules \
 		  -D BUILD_EXAMPLES=ON \
 		  -D BUILD_NEW_PYTHON_SUPPORT=ON \
 		  -D WITH_IPP=OFF \
 		  -D WITH_V4L=ON ..
-		  RUN make -j$NUM_CORES
-		  RUN make install
-		  RUN ldconfig
+RUN make -j$NUM_CORES
+RUN make install
+RUN ldconfig
 # Define default command.
 CMD ["bash"]
