@@ -13,6 +13,8 @@ develop-eggs
 lib
 lib64
 
+# Static data
+volleyup/data
 # Installer logs
 pip-log.txt
 

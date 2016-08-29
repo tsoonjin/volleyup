@@ -9,7 +9,9 @@ setup(
     description='Beach Volleyball Match Analysis',
     license='MIT',
     keywords='tracking detection volleyball',
-    install_requires=['OpenCV>=3.0',
+    install_requires=['numpy',
                       ],
     packages=['volleyup'],
+    package_data={'volleyup': ['data/**']},
+    packa
 )
