@@ -7,8 +7,8 @@ setup(
     author='Jin',
     author_email='jinified@gmail.com',
     description='Beach Volleyball Match Analysis',
-    license='Apache Software License',
-    keywords='tracking detection volleyball'
+    license='MIT',
+    keywords='tracking detection volleyball',
     install_requires=['OpenCV>=3.0',
                       ],
     packages=['volleyup'],
