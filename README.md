@@ -3,8 +3,15 @@ A python application that analyzes beach volleyball matches to extract important
 for tactical planning
 
 ## Requirements
-1. Track all players movement from a top-down view
-2. Track the ball
+ - [ ] stitch to form panorama of volleyball court with player actions and ball
+ - [ ] top-down view of the players' position and ball position on *full* volleyball court
+ - [ ] plot position and movement of *player* from top view 
+ - [ ] plot position and movement of *ball* from top view
+ - [ ] concatenate all 7 videos with the following layout:
+
+ | Original Video                | Full volleyball court                          |
+ |-------------------------------|------------------------------------------------|
+ | Top-down view - player - ball | Statistics:  - distance run  - number of jumps |
 
 ## Getting Started
 1. [Installing OpenCV3 on Ubuntu 16.04](http://thaim.hatenablog.jp/entry/2016/07/11/004631)
