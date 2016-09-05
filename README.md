@@ -11,10 +11,26 @@ for tactical planning
 
  | Original Video                | Full volleyball court                          |
  |-------------------------------|------------------------------------------------|
- | Top-down view - player - ball | Statistics:  - distance run  - number of jumps |
+ | Top-down view 		 | Statistics					  |
+ | - player			 | - distance run				  | 
+ | - ball 		         | - number of jumps 			 	  |
 
 ## Getting Started
-1. [Installing OpenCV3 on Ubuntu 16.04](http://thaim.hatenablog.jp/entry/2016/07/11/004631)
+1. [Installing OpenCV3 on Ubuntu 16.04](http://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/)
+
+## Strategy
+
+### 1. Image mosaicing for video
+ - [Mosaics: U.Washington](https://courses.cs.washington.edu/courses/cse455/09wi/Lects/lect7.pdf)
+ - [Recognizing panorama, Lowe, 2003](http://matthewalunbrown.com/papers/iccv2003.pdf)
+ - [Image mosaicing with Motion Segmentation Stanford](http://web.stanford.edu/class/ee392j/Winter2002/projects/roman_gilat_report.pdf)
+ - [Real-time panorama and image stitching PyImageSearch](http://www.pyimagesearch.com/2016/01/25/real-time-panorama-and-image-stitching-with-opencv/)
+ - [OpenCV panorma stitching for 2 images](http://www.pyimagesearch.com/2016/01/11/opencv-panorama-stitching/)
+
+### 2. Getting bird-eye view of the video
+ - [Recovering a comprehensive road appearance mosaic from video](http://www.zemris.fer.hr/~ssegvic/pubs/sikiric10mipro.pdf)
+ - [Real Time Distance Determination for an  Automobile Environment using Inverse Perspective Mapping in Open CV ](http://shanetuohy.com/fyp/Images/Shane%20Tuohy%20Thesis.pdf)
+ - use perspective transform to warp the perspective by detecting corners of court
 
 ## Prior knowledge
 1. PCA, SVD
