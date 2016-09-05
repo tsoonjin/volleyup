@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import sys
 import cv2
+import signal
 from optparse import OptionParser
 
-from utils import get_video_source, create_windows
+from Video import Video
 
 
 def init_env(args):
@@ -13,35 +14,22 @@ def init_env(args):
     parser.add_option("-t", "--target", dest="target", default=None,
                       help="target video path")
     options = parser.parse_args(args)[0]
-    if not options.target:
-        print('No input video given')
-        exit()
 
     # GUI setup
-    create_windows()
     return options
 
 
-def main(cap):
-    frames = []
-    processed = []
-    fgbg = cv2.BackgroundSubtractorMOG2()
-
-    while True:
-        ret, frame = cap.read()
-        frames.append(frame)
-        fgmask = fgbg.apply(frame)
-        processed.append(fgmask)
-        cv2.imshow('original', frame)
-        cv2.imshow('processed', fgmask)
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
-            break
-    cap.release()
+def main():
+    signal.signal(signal.SIGINT, handle_SIGINT)
+    video = Video('data/beachVolleyballFull.mov')
+    video.write_frames()
     cv2.destroyAllWindows()
 
 
+def handle_SIGINT(signal, frame):
+    print("Terminated by user")
+    exit()
+
 if __name__ == '__main__':
     options = init_env(sys.argv[1:])
-    cap = get_video_source(options.target)
-    main(cap)
+    main()
