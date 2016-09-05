@@ -2,3 +2,15 @@
 
 STUB_DIR = 'data/stub/'
 DATA_DIR = 'data/'
+
+'''BGR COLOR CODES'''
+RED = [0, 0, 255]
+BLUE = [255, 128, 0]
+YELLOW = [0, 255, 255]
+GREEN = [0, 255, 0]
+ORANGE = [0, 69, 255]
+PURPLE = [204, 0, 204]
+WHITE = [255, 255, 255]
+
+# Volleyball Court setting 
+FULL_COURT = (1200, 600)
