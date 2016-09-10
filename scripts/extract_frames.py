@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+sys.path.insert(0, '../')
 from volleyup.Video import Video
 from volleyup.utils import get_basename
 

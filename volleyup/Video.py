@@ -15,16 +15,14 @@ class Video():
     ----------
     bg_hist     : number of frames accumulated as background
     bg_thresh   : minimum difference between current frame and background
-    desired_fps : rate at which video wished to be extracted
     """
-    def __init__(self, name, bg_hist=20, bg_thresh=30, desired_fps=40):
+    def __init__(self, name, bg_hist=20, bg_thresh=30):
         self.name = os.path.splitext(name.rsplit('/', 1)[-1])[0]
         self.__cap = get_video_source(name)
         self.fps = self.__cap.get(cv2.CAP_PROP_FPS)
         self.bg_hist = bg_hist
         self.bg_thresh = bg_thresh
-        self.desired_fps = desired_fps
-        self.frames = self.get_frames(desired_fps)
+        self.frames = self.get_frames()
         # Video intrinsic properties
         self.shape = (self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH),       # (x, y)
                       self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -51,13 +49,8 @@ class Video():
         self.__cap.release()
         cv2.destroyAllWindows()
 
-    def get_frames(self, desired_fps):
-        """ Extracts all frames in video given fps
-        Parameters
-        ----------
-        desired_fps : int
-            number of frames extracted per second
-        """
+    def get_frames(self):
+        """ Extracts all frames in video given fps """
         frames = []
         # Read straight from folder instead of iterating through video if video has been processed
         if os.path.exists(os.path.abspath("data/{}".format(self.name))):
@@ -67,10 +60,9 @@ class Video():
         else:
             while True:
                 ret, frame = self.__cap.read()
-                if (self.__cap.get(cv2.CAP_PROP_POS_FRAMES) % self.fps) < desired_fps:
-                    frames.append(frame)
                 if self.is_eov():
                     break
+                frames.append(frame)
         return frames
 
     def reset_video(self):
