@@ -26,6 +26,11 @@ for tactical planning
  - [Image mosaicing with Motion Segmentation Stanford](http://web.stanford.edu/class/ee392j/Winter2002/projects/roman_gilat_report.pdf)
  - [Real-time panorama and image stitching PyImageSearch](http://www.pyimagesearch.com/2016/01/25/real-time-panorama-and-image-stitching-with-opencv/)
  - [OpenCV panorma stitching for 2 images](http://www.pyimagesearch.com/2016/01/11/opencv-panorama-stitching/)
+ - [Using RANSAC with OpenCV SIFT](https://gitlab.com/josemariasoladuran/object-recognition-opencv-python/blob/master/objrecogn.py)
+ - [Naive image stitching](http://home.deib.polimi.it/boracchi/teaching/IAS/Stitching/stitch.html)
+ - [Automated Panorama Stitching](https://cs.brown.edu/courses/csci1950-g/results/proj6/edwallac/)
+ - [Auto Stitching Photo Mosaics CMU](http://www.cs.cmu.edu/afs/andrew/scs/cs/15-463/f07/proj4/www/wwedler/)
+ - [Some problems on image stitching SO](http://stackoverflow.com/questions/11134667/some-problems-on-image-stitching-homography)
 
 ### 2. Getting bird-eye view of the video
  - [Recovering a comprehensive road appearance mosaic from video](http://www.zemris.fer.hr/~ssegvic/pubs/sikiric10mipro.pdf)
@@ -59,6 +64,10 @@ for tactical planning
  - [PyImageSearch Panorama Stiching tutorial](http://www.pyimagesearch.com/2016/01/11/opencv-panorama-stitching/)
  - [PyImageSearch getPerspectiveTransform](http://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/)
  - [Generating bird eye view opencv SO](http://stackoverflow.com/questions/15768651/generating-a-birds-eye-top-view-with-opencv)
+8. Edge Detection
+ - [Canny Edge Computerphile](https://www.youtube.com/watch?v=sRFM5IEqR2w)
+9. Features
+ - [RANSAC](https://www.youtube.com/watch?v=NKxXGsZdDp8)
 
 
 ## Courses
