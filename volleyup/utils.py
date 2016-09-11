@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 import cv2
 import os
+import glob
 import numpy as np
 
+import config
+
+
+# Input Output
 
 def get_basename(name):
     path = os.path.abspath(name)
@@ -19,6 +24,27 @@ def get_video_source(filename=None):
     return cv2.VideoCapture(source)
 
 
+def get_jpgs(dirpath, skip=60):
+    """ Returns all images located in given dirpath
+    Parameters
+    ----------
+    skip : number of frames skip to reduce computation time
+
+    """
+    if os.path.exists(os.path.abspath(dirpath)):
+        filenames = os.listdir(dirpath)
+        filenames.sort(key=lambda x: int(x.split('.', 1)[0]))
+        frames = [cv2.imread('{}/{}'.format(dirpath, filename))
+                  for filename in filenames if filename.endswith('.jpg')]
+        out = frames[0::skip]
+        print('Read {} images from {}'.format(len(out), dirpath))
+        return out
+    print('Directory {} does not exist'.format(dirpath))
+    return None
+
+# Drawing functions
+
+
 def draw_str(dst, target, s):
     x, y = target
     cv2.putText(dst, s, (x+1, y+1), cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 0, 0), thickness=2)
@@ -29,6 +55,18 @@ def create_windows(names=['original', 'processed']):
     """ Generates windows given list of names """
     for name in names:
         cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+
+
+def workon_frames(frames, wait=1000):
+    """ Wait for n milliseconds before moving on to next frame """
+    for frame in frames:
+        cv2.imshow('original', frame)
+        k = cv2.waitKey(wait)
+        if k == 27:
+            break
+    cv2.destroyAllWindows()
+
+# Image Analysis
 
 
 def get_channels(img):

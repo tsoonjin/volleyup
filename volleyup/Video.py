@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import os
 import cv2
-import glob
 import numpy as np
-from collections import deque
+
+import config
+
 from utils import get_video_source
-from imgproc import canny_edge
 from flow import LKTracker, FarnebackTracker
 
 
@@ -20,9 +20,6 @@ class Video():
         self.name = os.path.splitext(name.rsplit('/', 1)[-1])[0]
         self.__cap = get_video_source(name)
         self.fps = self.__cap.get(cv2.CAP_PROP_FPS)
-        self.bg_hist = bg_hist
-        self.bg_thresh = bg_thresh
-        self.frames = self.get_frames()
         # Video intrinsic properties
         self.shape = (self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH),       # (x, y)
                       self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -33,12 +30,10 @@ class Video():
 
     def play(self):
         self.reset_video()  # Ensures always playing video from first frame
-        bg_frames = deque(maxlen=self.bg_hist)
         print("Playing {}:\t Size: {}\t Num of Frames: {}\t FPS:{}".format(
             self.name, self.shape, len(self.frames), self.fps))
         while True:
             ret, frame = self.__cap.read()
-            bg_frames.append(frame)
             cv2.imshow(self.name, frame)
             k = cv2.waitKey(1)
             if self.is_eov():
@@ -49,40 +44,32 @@ class Video():
         self.__cap.release()
         cv2.destroyAllWindows()
 
-    def get_frames(self):
-        """ Extracts all frames in video given fps """
-        frames = []
-        # Read straight from folder instead of iterating through video if video has been processed
-        if os.path.exists(os.path.abspath("data/{}".format(self.name))):
-            print("Frames already existed for {}".format(self.name))
-            frames = [cv2.imread(filename)
-                      for filename in glob.iglob("data/{}/*".format(self.name))]
-        else:
-            while True:
-                ret, frame = self.__cap.read()
-                if self.is_eov():
-                    break
-                frames.append(frame)
-        return frames
-
     def reset_video(self):
         """ Reset video to first frame """
         self.__cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-    def write_frames(self, dirpath='data/{}', extension='jpg'):
+    def write_frames(self, dirpath=None, extension='jpg'):
         """ Write raw frames to directory given
         Parameters
         ----------
         dirpaths : directory path to save extracted images
         type     : image extension
         """
-        dirpath = dirpath.format(self.name)
+        dirpath = dirpath if dirpath else '{}{}'.format(config.DATA_DIR, self.name)
         # Create directory if does not exists
         if not os.path.exists(os.path.abspath(dirpath)):
             print("Creating directory: {}".format(os.path.abspath(dirpath)))
             os.makedirs(dirpath)
-        for i, frame in enumerate(self.frames):
-            cv2.imwrite("{}/{}.{}".format(dirpath, i, extension), frame)
+            self.reset_video()
+            while True:
+                frame_id = self.__cap.get(cv2.CAP_PROP_POS_FRAMES) + 1
+                ret, frame = self.__cap.read()
+                cv2.imwrite("{}/{}.{}".format(dirpath, frame_id, extension), frame)
+                if self.is_eov():
+                    break
+            print('Successfully written frames')
+        else:
+            print('Directory is not empty')
 
     def is_eov(self):
         """ Check for end of frame in a video """

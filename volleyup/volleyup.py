@@ -4,7 +4,6 @@ import cv2
 import signal
 from optparse import OptionParser
 
-from imgproc import intensity_edge_detector, compute_SIFT
 from Video import Video
 
 
@@ -23,8 +22,6 @@ def init_env(args):
 def main():
     signal.signal(signal.SIGINT, handle_SIGINT)
     video = Video('data/beachVolleyballFull.mov')
-    Video.process_video(video.frames, compute_SIFT)
-    # video.lk_tracker.run()
     cv2.destroyAllWindows()
 
 

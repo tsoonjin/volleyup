@@ -18,4 +18,3 @@ if __name__ == '__main__':
         video = Video(vidpath)
         print("Processing video ...")
         video.write_frames(dirpath)
-        print("Successfully extracted frames to: {}".format(dirpath))
