@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import cv2
 import os
-import glob
 import numpy as np
 
-import config
+from feature import FeatureDescriptor
 
 
 # Input Output
@@ -69,7 +68,49 @@ def workon_frames(frames, wait=1000):
 # Image Analysis
 
 
-def get_channels(img):
+def display_features(frames, channel='gray', feature='sift', wait=100):
+    """ Draw keypoints detected using feature supported
+    Parameters
+    ----------
+    feature : feature descriptor used. Supports SIFT, SURF, AKAZE, ORB, BRISK
+    channe  : color channel used when computing image feature
+
+    """
+    ft = FeatureDescriptor()
+    for f in frames:
+        kps, descs = ft.compute(get_channel(f, channel), feature)
+        ft.draw_features(f, kps)
+        cv2.imshow(feature, f)
+        k = cv2.waitKey(wait)
+        if k == 27:
+            break
+    cv2.destroyAllWindows()
+
+
+def display_channels(frames, wait=100):
+    " Displayes BGR, HSV and LAB channels information given frames """
+    r, c = frames[0].shape[:2]
+    for f in frames:
+        out = cv2.resize(fuse_channels(f), (c * 2, r * 2))
+        cv2.imshow('channels', out)
+        k = cv2.waitKey(wait)
+        if k == 27:
+            break
+    cv2.destroyAllWindows()
+
+
+def get_channel(img, channel):
+    """ Get specific color channel given an image """
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    channels = {'bgr_b': img[..., 0], 'bgr_green': img[..., 1], 'bgr_r': img[..., 2],
+                'hsv_h': hsv[..., 0], 'hsv_s': hsv[..., 1], 'hsv_v': hsv[..., 2],
+                'lab_l': lab[..., 0], 'lab_a': lab[..., 1], 'lab_b': lab[..., 2],
+                'gray': cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)}
+    return channels[channel]
+
+
+def fuse_channels(img):
     """ Returns bgr, hsv and lab channels of image in order """
     return np.vstack((get_bgr_stack(img), get_hsv_stack(img), get_lab_stack(img)))
 

@@ -2,6 +2,8 @@
 """ Feature Detector and Descriptor Class """
 import cv2
 
+import config
+
 
 class FeatureDescriptor():
     """ Feature related computation """
@@ -11,11 +13,19 @@ class FeatureDescriptor():
                          'surf':    cv2.xfeatures2d.SURF_create(600),
                          'orb':     cv2.ORB_create(400),
                          'brisk':   cv2.BRISK_create()}
+        self.imgs = []
 
     def compute(self, img, feature='sift'):
         """ Returns keypoints and descriptors of chosen feature
         Parameters
         ----------
         feature:    feature detector and descriptor used
+
+        Returns
+        -------
+        (keypoints, descriptors)
         """
         return self.features[feature].detectAndCompute(img, None)
+
+    def draw_features(self, canvas, keypoints, color=config.RED, rad=1):
+        cv2.drawKeypoints(canvas, keypoints, canvas, color, rad)
