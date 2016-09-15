@@ -17,6 +17,9 @@ for tactical planning
 
 ## Getting Started
 1. [Installing OpenCV3 on Ubuntu 16.04](http://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/)
+2. [Getting best out of Numpy](http://ipython-books.github.io/featured-01/)
+3. [Optimization of Numpy](http://nbviewer.jupyter.org/github/ipython-books/cookbook-code/tree/master/notebooks/chapter04_optimization/)
+4. [IPython Cookbook](http://ipython-books.github.io/cookbook/)
 
 ## Strategy
 

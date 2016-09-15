@@ -4,6 +4,7 @@ STUB_DIR = 'data/stub/'
 DATA_DIR = 'data/'
 INPUT_DATA = 'data/beachVolleyballFull.mov'
 INPUT_IMGS = 'data/beachVolleyballFull'
+INDVIDUAL_VIDEOS = {'{}'.format(i): 'data/beachVolleyball{}'.format(i) for i in range(1, 8)}
 
 '''BGR COLOR CODES'''
 RED = [0, 0, 255]

@@ -56,10 +56,13 @@ def create_windows(names=['original', 'processed']):
         cv2.namedWindow(name, cv2.WINDOW_NORMAL)
 
 
-def workon_frames(frames, wait=1000):
+def workon_frames(frames, func, wait=100):
     """ Wait for n milliseconds before moving on to next frame """
+    cv2.namedWindow('original', cv2.WINDOW_NORMAL)
+    cv2.namedWindow(func.__name__, cv2.WINDOW_NORMAL)
     for frame in frames:
         cv2.imshow('original', frame)
+        cv2.imshow(func.__name__, func(frame))
         k = cv2.waitKey(wait)
         if k == 27:
             break
@@ -112,7 +115,8 @@ def get_channel(img, channel):
 
 def fuse_channels(img):
     """ Returns bgr, hsv and lab channels of image in order """
-    return np.vstack((get_bgr_stack(img), get_hsv_stack(img), get_lab_stack(img)))
+    return np.vstack((get_bgr_stack(img), get_hsv_stack(img),
+                      get_lab_stack(img), get_salient_stack(img)))
 
 
 def get_bgr_stack(img):
@@ -138,3 +142,23 @@ def get_ycb_stack(img):
 
 def get_lab_stack(img):
     return get_bgr_stack(cv2.cvtColor(img, cv2.COLOR_BGR2LAB))
+
+
+def get_salient_stack(img):
+    """ Return saliency map for each channels in given image colorspace """
+    a, b, c = cv2.split(img)
+    a = cv2.cvtColor(get_salient(a), cv2.COLOR_GRAY2BGR)
+    b = cv2.cvtColor(get_salient(b), cv2.COLOR_GRAY2BGR)
+    c = cv2.cvtColor(get_salient(c), cv2.COLOR_GRAY2BGR)
+    return np.hstack((a, b, c))
+
+
+def get_salient(chan):
+    empty = np.ones_like(chan)
+    mean = np.mean(chan)
+    mean = empty * mean
+    blur = cv2.GaussianBlur(chan, (21, 21), 1)
+    final = mean - blur
+    final = final.clip(min=0)
+    final = np.uint8(final)
+    return final
