@@ -18,22 +18,22 @@ class Video():
     """
     def __init__(self, name, bg_hist=20, bg_thresh=30):
         self.name = os.path.splitext(name.rsplit('/', 1)[-1])[0]
-        self.__cap = get_video_source(name)
-        self.fps = self.__cap.get(cv2.CAP_PROP_FPS)
+        self.cap = get_video_source(name)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         # Video intrinsic properties
-        self.shape = (self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH),       # (x, y)
-                      self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.shape = (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH),       # (x, y)
+                      self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         # Initialize various components of video pipeline
-        self.lk_tracker = LKTracker(self.__cap)
-        self.farneback_tracker = FarnebackTracker(self.__cap)
+        self.lk_tracker = LKTracker(self.cap)
+        self.farneback_tracker = FarnebackTracker(self.cap)
 
     def play(self):
         self.reset_video()  # Ensures always playing video from first frame
         print("Playing {}:\t Size: {}\t Num of Frames: {}\t FPS:{}".format(
             self.name, self.shape, len(self.frames), self.fps))
         while True:
-            ret, frame = self.__cap.read()
+            ret, frame = self.cap.read()
             cv2.imshow(self.name, frame)
             k = cv2.waitKey(1)
             if self.is_eov():
@@ -41,12 +41,12 @@ class Video():
             if k == 27:
                 print("Terminated by user")
                 exit()
-        self.__cap.release()
+        self.cap.release()
         cv2.destroyAllWindows()
 
     def reset_video(self):
         """ Reset video to first frame """
-        self.__cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
     def write_frames(self, dirpath=None, extension='jpg'):
         """ Write raw frames to directory given
@@ -62,8 +62,8 @@ class Video():
             os.makedirs(dirpath)
             self.reset_video()
             while True:
-                frame_id = self.__cap.get(cv2.CAP_PROP_POS_FRAMES) + 1
-                ret, frame = self.__cap.read()
+                frame_id = self.cap.get(cv2.CAP_PROP_POS_FRAMES) + 1
+                ret, frame = self.cap.read()
                 cv2.imwrite("{}/{}.{}".format(dirpath, frame_id, extension), frame)
                 if self.is_eov():
                     break
@@ -73,7 +73,7 @@ class Video():
 
     def is_eov(self):
         """ Check for end of frame in a video """
-        return self.__cap.get(cv2.CAP_PROP_POS_FRAMES) == self.__cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        return self.cap.get(cv2.CAP_PROP_POS_FRAMES) == self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
     def median_frame_diff(self, curr_frame, bg_frames, thresh):
         """ Returns foreground mask via frame differencing

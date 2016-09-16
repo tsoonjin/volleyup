@@ -23,7 +23,7 @@ def get_video_source(filename=None):
     return cv2.VideoCapture(source)
 
 
-def get_jpgs(dirpath, skip=60):
+def get_jpgs(dirpath, skip=0):
     """ Returns all images located in given dirpath
     Parameters
     ----------
@@ -35,7 +35,7 @@ def get_jpgs(dirpath, skip=60):
         filenames.sort(key=lambda x: int(x.split('.', 1)[0]))
         frames = [cv2.imread('{}/{}'.format(dirpath, filename))
                   for filename in filenames if filename.endswith('.jpg')]
-        out = frames[0::skip]
+        out = frames[0::skip] if skip > 0 else frames
         print('Read {} images from {}'.format(len(out), dirpath))
         return out
     print('Directory {} does not exist'.format(dirpath))
