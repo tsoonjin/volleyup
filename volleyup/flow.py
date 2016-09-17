@@ -13,7 +13,7 @@ class FarnebackTracker():
         self.cap = cap
 
     def run(self):
-        self.cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         ret, frame1 = self.cap.read()
         prvs = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         hsv = np.zeros_like(frame1)
@@ -50,7 +50,7 @@ class LKTracker():
         self.frame_idx = 0
 
     def run(self):
-        self.cap.set(cv2.cv.CV_CAP_PROP_POS_FRAMES, 0)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
         while True:
             ret, frame = self.cap.read()
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
