@@ -9,12 +9,6 @@ for tactical planning
  - [ ] plot position and movement of *ball* from top view
  - [ ] concatenate all 7 videos with the following layout:
 
- | Original Video                | Full volleyball court                          |
- |-------------------------------|------------------------------------------------|
- | Top-down view 		 | Statistics					  |
- | - player			 | - distance run				  | 
- | - ball 		         | - number of jumps 			 	  |
-
 ## Getting Started
 1. [Installing OpenCV3 on Ubuntu 16.04](http://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/)
 2. Download and extract [data.zip](https://drive.google.com/open?id=0B8rRUzf-5h4fdHpVdzlLTktCZEk) folder into **volleyup/volleyup** folder to start playing with different algorithms available
