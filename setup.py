@@ -13,5 +13,4 @@ setup(
                       ],
     packages=['volleyup'],
     package_data={'volleyup': ['data/**']},
-    packa
 )
