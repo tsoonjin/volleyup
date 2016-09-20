@@ -17,13 +17,12 @@ for tactical planning
 
 ## Getting Started
 1. [Installing OpenCV3 on Ubuntu 16.04](http://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/)
-2. [Getting best out of Numpy](http://ipython-books.github.io/featured-01/)
-3. [Optimization of Numpy](http://nbviewer.jupyter.org/github/ipython-books/cookbook-code/tree/master/notebooks/chapter04_optimization/)
-4. [IPython Cookbook](http://ipython-books.github.io/cookbook/)
+2. Download and extract [data.zip](https://drive.google.com/open?id=0B8rRUzf-5h4fdHpVdzlLTktCZEk) folder into **volleyup/volleyup** folder to start playing with different algorithms available
 
 ## Strategy
 
 ### 1. Image mosaicing for video
+ - [AKAZE Matching using Brute Force matcher](http://docs.opencv.org/3.1.0/dc/d16/tutorial_akaze_tracking.html)
  - [Mosaics: U.Washington](https://courses.cs.washington.edu/courses/cse455/09wi/Lects/lect7.pdf)
  - [Recognizing panorama, Lowe, 2003](http://matthewalunbrown.com/papers/iccv2003.pdf)
  - [Image mosaicing with Motion Segmentation Stanford](http://web.stanford.edu/class/ee392j/Winter2002/projects/roman_gilat_report.pdf)

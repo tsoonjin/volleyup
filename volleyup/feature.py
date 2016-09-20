@@ -15,7 +15,7 @@ class FeatureDescriptor():
                          'brisk':   cv2.BRISK_create()}
         self.imgs = []
 
-    def compute(self, img, feature='sift'):
+    def compute(self, img, feature='sift', mask=None):
         """ Returns keypoints and descriptors of chosen feature
         Parameters
         ----------
@@ -25,7 +25,7 @@ class FeatureDescriptor():
         -------
         (keypoints, descriptors)
         """
-        return self.features[feature].detectAndCompute(img, None)
+        return self.features[feature].detectAndCompute(img, mask)
 
     def draw_features(self, canvas, keypoints, color=config.RED, rad=1):
         cv2.drawKeypoints(canvas, keypoints, canvas, color, rad)

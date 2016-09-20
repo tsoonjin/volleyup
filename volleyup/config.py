@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 STUB_DIR = 'data/stub/'
+PANORAMA_DIR = 'data/panorama/'
 DATA_DIR = 'data/'
 INPUT_DATA = 'data/beachVolleyballFull.mov'
 INPUT_IMGS = 'data/beachVolleyballFull'

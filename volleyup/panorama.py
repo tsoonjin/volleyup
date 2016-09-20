@@ -2,6 +2,9 @@
 """ Performs image stitching on images provided """
 import cv2
 import numpy as np
+import math
+import config
+from utils import get_channel, get_jpgs, get_netmask
 from feature import FeatureDescriptor
 
 
@@ -13,30 +16,49 @@ class TranslationStitcher():
         self.ft = FeatureDescriptor()
         self.imgs = imgs
 
-    def match_features(self, desc1, desc2, ratio=0.5):
-        """ Matches features using FlannBasedMatcher with Lowe's ratio given """
+    def calc_matches(self, desc1, desc2, method='bf'):
+        """ Calculate matches between descriptors specified by given method
+        Parameters
+        ----------
+        method : bf    (brute force matching)
+                 flann (fast nearest neighbor matching)
+
+        """
+        if method is 'bf':
+            bf = cv2.BFMatcher()
+            return bf.knnMatch(desc1, desc2, k=2)
         FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)
         flann = cv2.FlannBasedMatcher(index_params, search_params)
-        matches = flann.knnMatch(desc1, desc2, k=2)
+        return flann.knnMatch(desc1, desc2, k=2)
+
+    def match_features(self, desc1, desc2, ratio=0.8):
+        """ Matches features and filter only good matches using Lowe's ratio """
+        matches = self.calc_matches(desc1, desc2)
         good = [m for m, n in matches if m.distance < ratio * n.distance]
         return good
 
-    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches,
-                        min_good_match=8, reproj_thresh=5.0):
-        """ Calculates homography when there is at least 4 matches
+    def calc_translation(self, src_pts, dst_pts):
+        m = cv2.estimateRigidTransform(src_pts, dst_pts, True)
+        return np.float32([[1, 0, m[0, 2]],
+                           [0, 1, 0]])
+
+    def calc_homography_affine(self, imgA, imgB, kp1, kp2, good_matches,
+                               min_good_match=4, reproj_thresh=4.0):
+        """ Calculates homography and affine transformation when there is at least 8 matches
         Parameters
         ----------
         min_good_match : minimum number of good matches before calculating homography
         reproj_thresh  : maximum allowed reprojection error for RANSAC to be treated as inlier
         """
-        if len(good_matches) > min_good_match:
+        if len(good_matches) >= min_good_match:
             src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
             dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-            H, status = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 4.0)
-            return (H, status)
+            H, status = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, reproj_thresh)
+            affine = self.calc_translation(dst_pts, src_pts)
+            return (H, status, affine)
 
         print "Not enough matches are found - %d/%d" % (len(good_matches), min_good_match)
         return None
@@ -81,29 +103,61 @@ class TranslationStitcher():
         ox = int(ox)
         oy = int(oy)
         h, w = max(h1, h2), max(w1, w2)
-        image = np.zeros((h, w*2, 3), np.uint8)
+        image = np.zeros((h, w + abs(ox), 3), np.uint8)
         image[:h1, :w1] = imgA
         image[:h2-oy, ox:ox+w2] = imgB[oy:h2, :]
         return image
 
-    def generate_mosaic(self):
-        base_img = self.imgs[0]
-        for next_img in self.imgs[1:]:
-            kp1, desc1 = self.ft.compute(base_img, 'surf')
-            kp2, desc2 = self.ft.compute(next_img, 'surf')
-            (H, status) = self.calc_homography(base_img, next_img, kp1, kp2,
-                                               self.match_features(desc1, desc2))
+    def generate_mosaic(self, mask_func, channel='hsv_s', feature='akaze'):
+        """ Generates image mosaics from images
+        Parameters
+        ----------
+        mask_func : mask function to produce mask used to reduce search area of feature detection
+        channel   : channel used for processing
+        feature   : feature detector for interest point detection
+
+        """
+        panorama_img = self.imgs[0]
+        prev_img = panorama_img.copy()
+        for index, next_img in enumerate(self.imgs[1:]):
+            kp1, desc1 = self.ft.compute(get_channel(panorama_img, channel), feature,
+                                         mask_func(panorama_img))
+            kp2, desc2 = self.ft.compute(get_channel(next_img, channel), feature,
+                                         mask_func(next_img))
+            matches = self.match_features(desc1, desc2)
+            (H, status, affine) = self.calc_homography_affine(panorama_img, next_img, kp1,
+                                                              kp2, matches)
             if H is not None:
-                (size, offset) = self.calculate_size(base_img.shape, base_img.shape, H)
-                base_img = self.merge_images_translation(base_img, next_img, offset)
-                cv2.imshow('panorama', base_img)
-                cv2.waitKey(10)
-        return base_img
+                (size, offset) = self.calculate_size(panorama_img.shape, panorama_img.shape, H)
+                self.debug_matching(prev_img, next_img, mask_func, channel, feature)
+            panorama_img = next_img.copy()
+            prev_img = next_img.copy()
+        return panorama_img
+
+    def get_avg_translation(self, kp1, kp2, matches):
+        mean_x = np.mean([kp1[m.queryIdx].pt[0] - kp2[m.trainIdx].pt[0] for m in matches])
+        mean_y = np.mean([kp1[m.queryIdx].pt[1] - kp2[m.trainIdx].pt[1] for m in matches])
+        return int(mean_x), int(mean_y)
+
+    def debug_matching(self, imgA, imgB, mask_func, channel, feature, wait=0):
+        """ Displays debugging window for each images along with detected keypoints """
+        kp1, desc1 = self.ft.compute(get_channel(imgA, channel), feature,
+                                     mask_func(imgA))
+        kp2, desc2 = self.ft.compute(get_channel(imgB, channel), feature,
+                                     mask_func(imgB))
+        matches = self.match_features(desc1, desc2)
+        (H, status, affine) = self.calc_homography_affine(imgA, imgB, kp1, kp2, matches)
+        cv2.drawKeypoints(imgA, kp1, imgA, config.BLUE, 1)
+        cv2.drawKeypoints(imgB, kp2, imgB, config.BLUE, 1)
+        warpedA = cv2.warpPerspective(imgA, H, (imgB.shape[1], imgB.shape[0]))
+        warpedB = cv2.warpPerspective(imgB, np.linalg.inv(H), (imgA.shape[1], imgA.shape[0]))
+        matched = cv2.drawMatches(imgA, kp1, imgB, kp2, matches, None, flags=2)
+        cv2.imshow('matched | warped', np.vstack((matched, np.hstack((warpedA, warpedB)))))
+        cv2.waitKey(wait)
 
 
 if __name__ == '__main__':
-    imgs = [cv2.imread('data/stub/m{}.png'.format(i)) for i in range(1, 5)]
+    imgs = get_jpgs(config.INDVIDUAL_VIDEOS['3'], skip=3)
     stitcher = TranslationStitcher(imgs)
-    cv2.imshow('panorama', stitcher.generate_mosaic())
-    cv2.waitKey(0)
+    stitcher.generate_mosaic(get_netmask)
     cv2.destroyAllWindows()

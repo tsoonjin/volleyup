@@ -64,6 +64,11 @@ when tracking with a rigid grid approach
 
 ## 5. What Players do with the Ball: A Physically Constrained Interaction Modeling (likely won't be implemented)
 
+### **Details** ###
+1. [Matlab code](https://github.com/cvlab-epfl/balltracking)
+
+
+
 ## 6. Motion Detection Using an Improved Colour Model
 
 ### **Abstract** ###
@@ -94,10 +99,4 @@ Construct in real-time a panoramic video stream from input video streams capture
 2. Use motion vector from first frame to avoid recomputing transformation matrix. Use less descriptors
 3. Using LKT optical flow to calculate global 2D motion. Use only background IPs
 
-## 9. Ball tracking and 3D trajectory approximation with applications to tactics analysis from single-camera volleyball sequences
-
-
-
-
-
-
+## [9. Motion Field to Predict Play Evolution in Dynamic Sport Scenes](http://www.cc.gatech.edu/cpl/projects/playevolution/)

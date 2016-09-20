@@ -162,3 +162,10 @@ def get_salient(chan):
     final = final.clip(min=0)
     final = np.uint8(final)
     return final
+
+
+# Filters
+
+def get_netmask(img):
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (20, 100, 0), (50, 255, 255))
+    return mask

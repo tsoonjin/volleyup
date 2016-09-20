@@ -21,7 +21,8 @@ def init_env(args):
 
 def main():
     signal.signal(signal.SIGINT, handle_SIGINT)
-    video = Video('data/beachVolleyballFull.mov')
+    video = Video('data/beachVolleyball3.mov')
+    video.lk_tracker.run()
     cv2.destroyAllWindows()
 
 
