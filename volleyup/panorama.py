@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Performs image stitching on images provided """
+""" Performs image stitching on images provided, to create a panorama view """
 import cv2
 import numpy as np
 import math
@@ -141,23 +141,24 @@ class TranslationStitcher():
 
     def debug_matching(self, imgA, imgB, mask_func, channel, feature, wait=0):
         """ Displays debugging window for each images along with detected keypoints """
-        kp1, desc1 = self.ft.compute(get_channel(imgA, channel), feature,
+        key_points_A, descA = self.ft.compute(get_channel(imgA, channel), feature,
                                      mask_func(imgA))
-        kp2, desc2 = self.ft.compute(get_channel(imgB, channel), feature,
+        key_points_B, descB = self.ft.compute(get_channel(imgB, channel), feature,
                                      mask_func(imgB))
-        matches = self.match_features(desc1, desc2)
-        (H, status, affine) = self.calc_homography_affine(imgA, imgB, kp1, kp2, matches)
-        cv2.drawKeypoints(imgA, kp1, imgA, config.BLUE, 1)
-        cv2.drawKeypoints(imgB, kp2, imgB, config.BLUE, 1)
+        matching_features = self.match_features(descA, descB)
+        (H, status, affine) = self.calc_homography_affine(imgA, imgB, key_points_A, key_points_B, matching_features)
+        cv2.drawKeypoints(imgA, key_points_A, imgA, config.BLUE, 1)
+        cv2.drawKeypoints(imgB, key_points_B, imgB, config.BLUE, 1)
         warpedA = cv2.warpPerspective(imgA, H, (imgB.shape[1], imgB.shape[0]))
         warpedB = cv2.warpPerspective(imgB, np.linalg.inv(H), (imgA.shape[1], imgA.shape[0]))
-        matched = cv2.drawMatches(imgA, kp1, imgB, kp2, matches, None, flags=2)
+        matched = cv2.drawMatches(imgA, key_points_A, imgB, key_points_B, matching_features, None, flags=2)
         cv2.imshow('matched | warped', np.vstack((matched, np.hstack((warpedA, warpedB)))))
         cv2.waitKey(wait)
 
 
 if __name__ == '__main__':
-    imgs = get_jpgs(config.INDVIDUAL_VIDEOS['3'], skip=3)
+    # Put extracted images into DATA_DIR before running this
+    imgs = get_jpgs(config.DATA_DIR, skip=3)
     stitcher = TranslationStitcher(imgs)
     stitcher.generate_mosaic(get_netmask)
     cv2.destroyAllWindows()

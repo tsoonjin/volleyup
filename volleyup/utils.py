@@ -33,9 +33,10 @@ def get_jpgs(dirpath, skip=0):
     """
     if os.path.exists(os.path.abspath(dirpath)):
         filenames = os.listdir(dirpath)
+        # Only attempt to parse and sort files that end with .jpg
+        filenames = [filename for filename in filenames if filename.endswith(".jpg")]
         filenames.sort(key=lambda x: int(x.split('.', 1)[0]))
-        frames = [cv2.imread('{}/{}'.format(dirpath, filename))
-                  for filename in filenames if filename.endswith('.jpg')]
+        frames = [cv2.imread('{}/{}'.format(dirpath, filename)) for filename in filenames]
         out = frames[0::skip] if skip > 0 else frames
         print('Read {} images from {}'.format(len(out), dirpath))
         return out
