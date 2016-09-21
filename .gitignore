@@ -16,6 +16,7 @@ lib64
 
 # Static data
 volleyup/data
+docs
 
 # Installer logs
 pip-log.txt
