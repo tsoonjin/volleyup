@@ -6,7 +6,7 @@ import math
 import config
 from utils import get_channel, get_jpgs, get_netmask
 from feature import FeatureDescriptor
-
+from cv2 import KeyPoint
 
 class TranslationStitcher():
     """ Assumes only translation offset between images and credited to
@@ -44,23 +44,18 @@ class TranslationStitcher():
         return np.float32([[1, 0, m[0, 2]],
                            [0, 1, 0]])
 
-    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches, min_good_match=4, reproj_thresh=4.0):
+    def calc_homography(self, imgA, imgB, src_pts, dst_pts, min_good_match=4, reproj_thresh=4.0):
         """ Calculates homography and affine transformation when there is at least 8 matched feature points (4 in each image)
         Parameters
         ----------
         min_good_match : minimum number of good matches before calculating homography
         reproj_thresh  : maximum allowed reprojection error for RANSAC to be treated as inlier
         """
-        if len(good_matches) >= min_good_match:
-            src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
-            dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        #src_pts = np.float32([kp1[m.queryIdx].pt for m in good_matches]).reshape(-1, 1, 2)
+        #dst_pts = np.float32([kp2[m.trainIdx].pt for m in good_matches]).reshape(-1, 1, 2)
 
-            H, status = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, reproj_thresh)
-            affine = self.calc_translation(dst_pts, src_pts)
-            return (H, status, affine)
-
-        print "Not enough matches are found - %d/%d" % (len(good_matches), min_good_match)
-        return None
+        H, status = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, reproj_thresh)
+        return (H, status)
 
     def calculate_size(self, imgA_size, imgB_size, homography):
         (h1, w1) = imgA_size[:2]
@@ -96,66 +91,87 @@ class TranslationStitcher():
 
     def merge_images_translation(self, imgA, imgB, offset):
         # Put images side-by-side into 'image'.
-        print "Offset is", offset
-        (w1, h1) = imgA.shape[:2]
-        (w2, h2) = imgB.shape[:2]
+        (h1, w1) = imgA.shape[:2]
+        (h2, w2) = imgB.shape[:2]
         (ox, oy) = offset
         ox = int(ox)
         oy = int(oy)
         h, w = max(h1, h2), max(w1, w2)
-        image = np.zeros((w + abs(ox), h + abs(oy), 3), np.uint8)
-        
-        if ox > 0 and oy > 0:
-            image[:w1, :h1] = imgA
-            image[abs(ox):w2+abs(ox), abs(oy):h2+abs(oy)] = imgB
-            return image
-        elif ox > 0 and oy < 0:
-            image[:w1, abs(oy):h1+abs(oy)] = imgA
-            image[abs(ox):w2+abs(ox), :h2] = imgB
-            return image
-        elif ox < 0 and oy > 0:
-            image[abs(ox):w1+abs(ox), :h1] = imgA
-            image[:w2, abs(oy):h2+abs(oy)] = imgB
-            return image
-        else:
-            image[abs(ox):w1+abs(ox), abs(oy):h1+abs(oy)] = imgA
-            image[:w2, :h2] = imgB
-            return image
-    def generate_mosaic(self, mask_func, channel='hsv_s', feature='akaze'):
+        image = np.zeros((h, w + abs(ox), 3), np.uint8)
+        image[:h1, :w1] = imgA
+        image[:h2-oy, ox:ox+w2] = imgB[oy:h2, :]
+        return image
+
+    def generate_mosaic(self, mask_func, channel='hsv_s'):
         """ Generates image mosaics from images
         Parameters
         ----------
         mask_func : mask function to produce mask used to reduce search area of feature detection
         channel   : channel used for processing
-        feature   : feature detector for interest point detection
 
         """
         panorama_img = self.imgs[0]
         imgA = panorama_img.copy()
         for index, imgB in enumerate(self.imgs[1:]):
-            key_points_A, desc1 = self.ft.compute(get_channel(panorama_img, channel), feature, mask_func(panorama_img))
-            key_points_B, desc2 = self.ft.compute(get_channel(imgB, channel), feature, mask_func(imgB))
-            matching_features = self.match_features(desc1, desc2)
-            (H, status, affine) = self.calc_homography(panorama_img, imgB, key_points_A, key_points_B, matching_features)
-            print affine
-            if H is not None:
-                (size, offset) = self.calculate_size(panorama_img.shape, panorama_img.shape, H)
+            gray_imgA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
+            gray_imgB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
+            gray_imgA = np.float32(gray_imgA)
+            gray_imgB = np.float32(gray_imgB)
+            dst1 = cv2.cornerHarris(gray_imgA, 2, 3, 0.04)
+            dst2 = cv2.cornerHarris(gray_imgB, 2, 3, 0.04)
             
-                cv2.drawKeypoints(imgA, key_points_A, imgA, config.BLUE, 1)
-                cv2.drawKeypoints(imgB, key_points_B, imgB, config.BLUE, 1)
-                warpedB = cv2.perspectiveTransform(imgB, np.linalg.inv(H))
-                matched = cv2.drawMatches(imgA, key_points_A, imgB, key_points_B, matching_features, None, flags=2)
-                cv2.imshow('matched | warped', self.merge_images_translation(imgA, warpedB, (key_points_B[0].pt[0] - key_points_A[0].pt[0], key_points_B[0].pt[1] - key_points_A[0].pt[1])))
-                cv2.waitKey(0)
+            dst1 = cv2.dilate(dst1,None)
+            ret, dst1 = cv2.threshold(dst1,0.01*dst1.max(),255,0)
+            dst1 = np.uint8(dst1)
+            ret1, labels1, stats1, centroids1 = cv2.connectedComponentsWithStats(dst1)
+            
+            dst2 = cv2.dilate(dst2,None)
+            ret, dst2 = cv2.threshold(dst2,0.01*dst2.max(),255,0)
+            dst2 = np.uint8(dst2)
+            ret2, labels2, stats2, centroids2 = cv2.connectedComponentsWithStats(dst2)
+
+            criteria1 = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+            corners1 = cv2.cornerSubPix(dst1,np.float32(centroids1),(5,5),(-1,-1),criteria1)
+            result1 = np.hstack((centroids1, corners1))
+            result1 = np.int0(result1)
+            imgA[result1[:,1],result1[:,0]]=[0,0,255]
+            imgA[result1[:,3],result1[:,2]] = [0,255,0]
+            
+            criteria2 = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
+            corners2 = cv2.cornerSubPix(dst2,np.float32(centroids2),(5,5),(-1,-1),criteria2)
+            result2 = np.hstack((centroids2, corners2))
+            result2 = np.int0(result2)
+            imgB[result2[:,1],result2[:,0]]=[0,0,255]
+            imgB[result2[:,3],result2[:,2]] = [0,255,0]
+            
+            kp1 = []
+            mat1 = np.empty([0,0])
+            for i in range(len(dst1)):
+                for j in range(len(dst1[i])):
+                    if dst1[i,j] == 255:
+                        kp = KeyPoint(float(i), float(j), 10.0)
+                        np.append(mat1, kp)
+                        kp1.append(kp)
+            
+            kp2 = []
+            mat2 = np.empty([0,0])
+            for i in range(len(dst2)):
+                for j in range(len(dst2[i])):
+                    if dst2[i,j] == 255:
+                        kp = KeyPoint(float(i), float(j), 10.0)
+                        np.append(mat2, kp)
+                        kp2.append(kp)
+            
+            
+            matches = self.match_features(mat1, mat2)
+            matched = cv2.drawMatches(imgA, kp1, imgB, kp2, matches, None, flags=2)
+            print "Matches: ", matches
+            cv2.imshow('matched | warped', matched)
+            cv2.waitKey(0)
 
             panorama_img = imgB.copy()
             imgA = imgB.copy()
         return panorama_img
-
-    def get_avg_translation(self, kp1, kp2, matches):
-        mean_x = np.mean([kp1[m.queryIdx].pt[0] - kp2[m.trainIdx].pt[0] for m in matches])
-        mean_y = np.mean([kp1[m.queryIdx].pt[1] - kp2[m.trainIdx].pt[1] for m in matches])
-        return int(mean_x), int(mean_y)
 
 if __name__ == '__main__':
     # Put extracted images into DATA_DIR before running this
