@@ -4,6 +4,7 @@ import os
 import numpy as np
 
 from feature import FeatureDescriptor
+from config import OBJECT_COLOR
 
 
 # Input Output
@@ -166,6 +167,26 @@ def get_salient(chan):
 
 # Filters
 
+def get_courtmask(img):
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV),
+                       OBJECT_COLOR['court'][0], OBJECT_COLOR['court'][1])
+    return mask
+
+
+def get_playermask(img):
+    """ Generates player mask by inverting court mask """
+    return cv2.bitwise_not(get_courtmask(img))
+
+
 def get_netmask(img):
     mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (20, 100, 0), (50, 255, 255))
     return mask
+
+
+# Image manipulations
+
+def get_roi(img, top_left, bot_right):
+    """ Returns region of interest of an img given bounding box points """
+    y = [max(top_left[1], 0), min(bot_right[1], img.shape[0] - 1)]
+    x = [max(top_left[0], 0), min(bot_right[0], img.shape[1] - 1)]
+    return img[y[0]:y[1], x[0]:x[1]]
