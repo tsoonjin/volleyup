@@ -17,5 +17,8 @@ ORANGE = [0, 69, 255]
 PURPLE = [204, 0, 204]
 WHITE = [255, 255, 255]
 
+''' OBJECT HSV COLOR RANGES '''
+OBJECT_COLOR = {'court': [(20, 0, 100), (50, 100, 255)]}
+
 # Volleyball Court setting
-FULL_COURT = (1200, 600)
+FULL_COURT = (800, 400)
