@@ -168,5 +168,6 @@ def get_salient(chan):
 # Filters
 
 def get_netmask(img):
-    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (20, 100, 0), (50, 255, 255))
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 20,200,220 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 100, 200), (hsv_yellow[0][0][0]+15, 255, 255))
     return mask
