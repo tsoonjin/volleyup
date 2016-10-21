@@ -22,3 +22,4 @@ OBJECT_COLOR = {'court': [(20, 0, 100), (50, 100, 255)]}
 
 # Volleyball Court setting
 FULL_COURT = (800, 400)
+RESIZE_FACTOR = 0.5

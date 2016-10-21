@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from feature import FeatureDescriptor
-from config import OBJECT_COLOR
+from config import OBJECT_COLOR, RESIZE_FACTOR
 
 
 # Input Output
@@ -190,3 +190,8 @@ def get_roi(img, top_left, bot_right):
     y = [max(top_left[1], 0), min(bot_right[1], img.shape[0] - 1)]
     x = [max(top_left[0], 0), min(bot_right[0], img.shape[1] - 1)]
     return img[y[0]:y[1], x[0]:x[1]]
+
+
+def resize(img):
+    y, x = img.shape[:2]
+    return cv2.resize(img, (int(x * RESIZE_FACTOR), int(y * RESIZE_FACTOR)))
