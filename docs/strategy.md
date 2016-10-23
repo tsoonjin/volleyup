@@ -1,102 +1,105 @@
-# Strategy
-Tactics derived from various journal papers working on this topic
+## Jin's documentations
 
-## 1. Visual Tracking of Athletes in Beach Volleyball Using a Single Camera
+### Multiple Target Tracking (MTT)
 
-### **Abstract** ###
-A novel method based on integral histograms, to use a high dimensional model for a particle filter
-without drastic increase in runtime. We extend integral histograms to handle rotated objects
+#### Multiple Hypotheses Tracking Revisited
 
-### **Details** ###
-1. Homography
- - Homography, to compute court positions of players (for details see Hartley & Zisserman, 2002)
- - reconstruct real world court coordinates (e.g. 8x16m for beach volleyball)
-2. Color tracking using particle filter
- - Using H, S, V histogram using integral image
- - original tracker divided into 3 parts estimate rotation
-3. Including background information
- - integrate backgrund similarity into likelihood measurement of the particles
+1. Introduction
+ - Builds a tree of potential track hypotheses for each candidate target, thereby providing a
+systematic solution to the data association problem. BFS search, therefore pruning is essential
 
-## 2. Video Object Extraction by Using Background Subtraction Techniques for Sports Applications
+2. Related Work
+ - network flow restricted to unary and pairwise potential.
+ - markov chain monte carlo (mcmc) 
 
-### **Abstract** ###
-Mixture of Gaussian turns out to be best in reliability of extraction of moving objects, robust
-to noise, whereas the conventional algorithms result in noise and poor extraction of objects
+#### Near-Online Multi-target Tracking with Aggregated Local Flow Descriptor
 
-### **Details** ###
-1. Frame difference
- - cons: similarity between court and platers. must be constantly moving
- - pros: remove noise. highly adaptive
-2. Approximate median
- - if |current - bg| > T: bg+1, fg = 1 else bg-1, fg = 0
- - good for handling slow movement
-3. Mixture of Gaussian
- - keeps cumulative average of the recent pixel values
-4. Mixture of Gaussians produces the best results, while approximate median filtering offers a
-simple alternative with competitive performance
+1. Introduction
+ - important to have a robust data association model and accurate similarity measure between
+ detections. 
+ - global trajectory optimization limited to post-video analysis
+ - online method prone to error because uses temporal window only
 
-## 3. ViBe: A universal background subtraction algorithm for video sequences
+2. Details
+ - Aggregated Local Flow Descriptor (ALFD) to measure similarity between detections across time
 
-### **Abstract** ###
-Adapts the model by choosing randomly which values to substitute from the background model.
-This approach differs from those based on the classical belief that the oldest values should be
-replaced first.
+### MCMC Particle Filter
 
-### **Details** ###
-1. Use radius R = 20 and cardinality of 2 
-2. Randomly select frame to replace
+1. Details
+ - add a MRF prior to motion model 
+ - uses MCMC sampling rather than traditional importance sampling 
 
-## 4. Tracking of Ball and Players in Beach Volleyball Videos
+### General tracking algorithm
 
-### **Abstract** ###
-Results suggest an improved robustness against player confusion between different particle sets
-when tracking with a rigid grid approach
+#### Mutli-camera Probabilistic Occupancy Map
 
-### **Details** ###
-1. Homographic transformation from image coordinate to 4 corners of a court
-2. Foreground extractionb by differencing with background model and morphological opening
-3. Mask weighting using 20-50 particles
-4. Movement weighting
-5. Color weighting using Bhattacharyya's distance
-6. Ball tracking
- - Uses two concenric squares to track a ball by constraining number of pixels in outer square
- - Generates trajectories based on current position of ball
-
-## 5. What Players do with the Ball: A Physically Constrained Interaction Modeling (likely won't be implemented)
-
-### **Details** ###
-1. [Matlab code](https://github.com/cvlab-epfl/balltracking)
+1. Details
+ - discretize ground plane to cells 
+ - known homography matrix to map to top view 
+ - eigenbackground subtraction to generate detections
 
 
+#### Multiple Object Tracking using K-Shortest Paths Optimization
 
-## 6. Motion Detection Using an Improved Colour Model
+1. Introduction
+ - kalman filter and mean shift works for small number of objects
+ - particle filter using mcmc follows in the same class. Grows exponential with window considered
+ - boosted particle filter
 
-### **Abstract** ###
-Our method relies on the abil- ity to represent colours in terms of a 3D-polar coordinate system
-having saturation independent of the brightness function; specifically, we build upon an 
-Improved Hue, Luminance, and Saturation space (IHLS). 
+2. Details
+ - consider bigger window when linking to achieve more robust assignment
+ - solve linear programming in fast manner
 
-### **Details** ###
-1. Outperforms the HSV model as well as the
-photometric colour invariants NRGB and c 1 c 2 c 3 in several challenging sequences
-2. Handles hue for low saturation case
 
-## 7. Improved optimal seam selection blending for fast video stitching of videos captured from freely moving devices
+#### Tracking Multiple Players using a Single Camera
 
-### **Details** ###
-1. Interest points (IP) using SURF and optical flow
-2. Filtering IPs belonging to foreground moving objects
-3. Enhanced blending, region-of-difference based
- - distance between pixels and intensity difference
+1. Introduction
+ - tracking-by-detection is the state of the art. Performs independent detections and link them
+ - single camera can performs as well with geometric constraint
+ - current approach that supersedes particle filter: connect detections into tracklets (short tracks)
 
-## 8. Fast stitching of videos captured from freely moving devices by exploiting temporal redundancy
+2. Details
+ - Retraining the Deformable Part Model (DPM)   
+ - geometric constraint such as court marking
+ - uses ellipse for non-maximum suppression
 
-### **Abstract** ###
-Construct in real-time a panoramic video stream from input video streams captured by freely moving cameras
 
-### **Details** ###
-1. Area of overlap from previous frames
-2. Use motion vector from first frame to avoid recomputing transformation matrix. Use less descriptors
-3. Using LKT optical flow to calculate global 2D motion. Use only background IPs
+#### Multi-Commodity Network Flow for Tracking Multiple People
 
-## [9. Motion Field to Predict Play Evolution in Dynamic Sport Scenes](http://www.cc.gatech.edu/cpl/projects/playevolution/)
+1. Introduction
+ - formalize as multiple commodity min-cost max-flow problem
+
+2. Related work
+ - kalman filter and gating but prone to identity switches
+ - particle filter only works for small batches due to growth in state space
+ - operations on tracklets that minimizes a global energy function
+ - conditional random field used to model occlusion and motion dependencies between tracklet
+ - linear programming and dynamic programming powerful alternative but hard to set the edge cost
+
+3. Background of problems
+ - tracking players different than pedastrian because of erratic movement and less predictable
+ - run KSP followed by linear programming
+
+
+### Background subtraction
+
+#### Segmentation by Eigenbackground subtraction
+
+1. Details
+ - sample N images to build adaptive eigenspace that models the background
+ - compute mean image and covariance matrix and perform eigen-value decomposition
+
+
+### Volleyball specific
+
+#### Analyzing Volleyball Match Data from the 2014 World Championships Using Machine Learning Techniques
+
+1. Introduction
+ - identify team's attacking patterns in volleyball matches that occur frequently in won rallies and 
+ infrequently in lost rallies
+ - identify attacking pattern used by one team but not the other
+
+2. Background
+ - Basic skills: serve, dig, pass, set, spike, block
+ - encode courts into grids into 3 x 3 squares
+ - relational learning using inductive logic programming (ILP)
