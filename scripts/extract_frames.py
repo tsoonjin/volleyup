@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import sys
 sys.path.insert(0, '../')
-from volleyup.Video import Video
-from volleyup.utils import get_basename
+
+from volleyup.utils.Video import Video
+from volleyup.utils.utils import get_basename
 
 if __name__ == '__main__':
     args = sys.argv[1:]

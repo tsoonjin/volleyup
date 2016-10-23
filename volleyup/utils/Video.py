@@ -57,8 +57,10 @@ class Video():
             os.makedirs(dirpath)
             self.reset_video()
             while True:
-                frame_id = self.cap.get(cv2.CAP_PROP_POS_FRAMES) + 1
+                frame_id = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES) + 1)
                 ret, frame = self.cap.read()
+                cv2.imshow('f', frame)
+                cv2.waitKey(10)
                 cv2.imwrite("{}/{}.{}".format(dirpath, frame_id, extension), frame)
                 if self.is_eov():
                     break
