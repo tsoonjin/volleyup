@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division
+import sys
+sys.append('../')
+
 import numpy as np
 import cv2
 

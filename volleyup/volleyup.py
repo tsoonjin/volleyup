@@ -4,7 +4,9 @@ import cv2
 import signal
 from optparse import OptionParser
 
-from Video import Video
+from bg_subtract.bg_subtract import median_bg_sub
+from utils import config
+from utils.utils import get_jpgs
 
 
 def init_env(args):
@@ -21,9 +23,8 @@ def init_env(args):
 
 def main():
     signal.signal(signal.SIGINT, handle_SIGINT)
-    video = Video('data/beachVolleyball3.mov')
-    video.lk_tracker.run()
-    cv2.destroyAllWindows()
+    frames = get_jpgs(config.INDVIDUAL_VIDEOS['3'])
+    median_bg_sub(frames)
 
 
 def handle_SIGINT(signal, frame):

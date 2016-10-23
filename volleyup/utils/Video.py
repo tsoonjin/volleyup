@@ -6,7 +6,6 @@ import numpy as np
 import config
 
 from utils import get_video_source
-from flow import LKTracker, FarnebackTracker
 
 
 class Video():
@@ -23,10 +22,6 @@ class Video():
         # Video intrinsic properties
         self.shape = (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH),       # (x, y)
                       self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-        # Initialize various components of video pipeline
-        self.lk_tracker = LKTracker(self.cap)
-        self.farneback_tracker = FarnebackTracker(self.cap)
 
     def play(self):
         self.reset_video()  # Ensures always playing video from first frame
