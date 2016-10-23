@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-""" Feature Detector and Descriptor Class """
 import cv2
 
 import config
-
 
 class FeatureDescriptor():
     """ Feature related computation """
