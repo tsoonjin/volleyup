@@ -5,9 +5,10 @@ import signal
 from optparse import OptionParser
 
 from tracker.pf.ParticleFilter import ParticleFilter, PlayerParticle
+from tracker.color_tracker import color_tracking
 from bg_subtract.bg_subtract import median_bg_sub, eigenbackground
 from utils import config
-from utils.utils import get_jpgs
+from utils.utils import get_jpgs, workon_frames
 
 
 def init_env(args):
@@ -24,14 +25,8 @@ def init_env(args):
 
 def main():
     signal.signal(signal.SIGINT, handle_SIGINT)
-    frames = get_jpgs(config.INDVIDUAL_VIDEOS['4'])
-    pf = ParticleFilter(PlayerParticle.generate, img_boundary=(frames[0].shape[1], frames[0].shape[0]))
-    for img in frames:
-        pf.process(img)
-        cv2.imshow('particle filter', img)
-        k = cv2.waitKey(1)
-        if k == 27:
-            break
+    frames = get_jpgs(config.INDVIDUAL_VIDEOS['3'])
+    workon_frames(frames, lambda x: color_tracking(x, config.COLOR_RANGE['green']))
 
 
 def handle_SIGINT(signal, frame):
