@@ -42,6 +42,18 @@ def get_jpgs(dirpath, skip=0):
     print('Directory {} does not exist'.format(dirpath))
     return None
 
+def write_jpgs(dirpath, jpgs):
+    """ 
+    Writes all images to the given dirpath
+        
+    """
+    if os.path.exists(os.path.abspath(dirpath)):
+        for i in range(len(jpgs)):
+            filename = dirpath + str(i) + ".jpg"
+            cv2.imwrite(filename, jpgs[i])
+        print('Wrote {} images to {}'.format(len(jpgs), dirpath))
+    #print('Directory {} does not exist'.format(dirpath))
+
 # Drawing functions
 
 
@@ -168,6 +180,19 @@ def get_salient(chan):
 # Filters
 
 def get_netmask(img):
-    hsv_yellow = cv2.cvtColor(np.uint8([[[ 20,200,220 ]]]), cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 100, 200), (hsv_yellow[0][0][0]+15, 255, 255))
+    """ net
+        hsv_yellow = cv2.cvtColor(np.uint8([[[ 30,220,230 ]]]), cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 100,200), (hsv_yellow[0][0][0]+15, 255, 255))
+    """
+    """ Sand
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 200,220,230 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 0,200), (hsv_yellow[0][0][0]+15, 200, 255))
+    """
+    
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 30,220,230 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 100,200), (hsv_yellow[0][0][0]+15, 255, 255))
+    """
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 160,250,250 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 0,200), (hsv_yellow[0][0][0]+15, 255, 255))
+    """
     return mask

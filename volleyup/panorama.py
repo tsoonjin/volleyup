@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 import math
 import config
-from utils import get_channel, get_jpgs, get_netmask
+import os
+from utils import get_channel, get_jpgs, get_netmask, write_jpgs
 from feature import FeatureDescriptor
 
 
@@ -25,8 +26,13 @@ class TranslationStitcher():
 
         """
         if method is 'bf':
+            """ Alternatively?
+            matcher = cv2.DescriptorMatcher_create("BruteForce")
+            rawMatches = matcher.knnMatch(desc1, desc2, 2)
+            return rawMatches
+            """
             bf = cv2.BFMatcher()
-            return bf.knnMatch(desc1, desc2, k=2)
+            return bf.knnMatch(desc1, desc2, 2)
         FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
         search_params = dict(checks=50)
@@ -44,7 +50,7 @@ class TranslationStitcher():
         return np.float32([[1, 0, m[0, 2]],
                            [0, 1, 0]])
 
-    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches, min_good_match=4, reproj_thresh=2.0):
+    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches, min_good_match=4, reproj_thresh=5.0):
         """ 
         Calculates homography when there are at least 8 matched feature points (4 in each image)
         Parameters
@@ -76,6 +82,7 @@ class TranslationStitcher():
         return np.where(overlayImage == [0,0,0], mainImage, overlayImage)
 
     def generate_panorama(self, mask_func, channel='hsv_s', feature='akaze'):
+        panorama_img_list = []
         """ Generates image panorama
         Parameters
         ----------
@@ -84,29 +91,65 @@ class TranslationStitcher():
         feature   : feature detector for interest point detection
 
         """
+        sift = cv2.xfeatures2d.SIFT_create()# testing with sift instead of akaze
         panorama_img = self.imgs[0]
+        resultingHomography = None
         # Add in margins in all directions
         panorama_img = np.pad(panorama_img, ((200,200),(200,200),(0,0)), mode='constant')
+        panorama_img_list.append(panorama_img.copy())
+        imgA = panorama_img.copy()
         for index, imgB in enumerate(self.imgs[1:]):
+            print "Processing image", index
+            imgB = np.pad(imgB, ((200,200),(200,200),(0,0)), mode='constant')
             # Find key features in each of the grayscale images, seems to perform better
-            key_points_A, desc1 = self.ft.compute(get_channel(panorama_img, channel), feature, cv2.cvtColor(panorama_img, cv2.COLOR_RGB2GRAY))
-            key_points_B, desc2 = self.ft.compute(get_channel(imgB, channel), feature, cv2.cvtColor(imgB, cv2.COLOR_RGB2GRAY))
+            #key_points_A, desc1 = self.ft.compute(get_channel(imgA, channel), feature, mask_func(imgA))
+            #key_points_B, desc2 = self.ft.compute(get_channel(imgB, channel), feature, mask_func(imgB))
+            key_points_A, desc1 = sift.detectAndCompute(mask_func(imgA), None)
+            key_points_B, desc2 = sift.detectAndCompute(mask_func(imgB), None)
             # Match feature descriptors and filter which keeps the good ones
             matching_features = self.match_features(desc2, desc1)
             # Calculate the homography matrix and affine required to transform imgB to panorama_img (so that the matching points overlap)
-            (H, status) = self.calc_homography(imgB, panorama_img, key_points_B, key_points_A, matching_features)
+            (H, status) = self.calc_homography(imgB, imgA, key_points_B, key_points_A, matching_features)
             if H is not None:
-                warpedB = cv2.warpPerspective(imgB, H, (panorama_img.shape[1], panorama_img.shape[0]))
+                if resultingHomography is None:
+                    resultingHomography = H
+                else:
+                    resultingHomography = resultingHomography * H
+                warpedB = cv2.warpPerspective(imgB, resultingHomography, (panorama_img.shape[1], panorama_img.shape[0]))
                 panorama_img = self.overlay_image(panorama_img, warpedB)
-                cv2.imshow('panorama', panorama_img)
-                cv2.waitKey(0)
+                panorama_img_list.append(panorama_img.copy())
+            imgA = imgB.copy()
 
-        return panorama_img
+        return panorama_img_list
+
+def convertToVideo(dirpath):
+    imgs = get_jpgs(dirpath)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    vw = cv2.VideoWriter("output.mov", fourcc, 30, (imgs[0].shape[1], imgs[0].shape[0]))#(imgs[0].shape[1]+400, imgs[0].shape[0]+400))
+    print "VideoWriter is opened:", vw.isOpened()
+    print("Writing video ...")
+    i = 0
+    for img in imgs:
+        print "Writing image", i
+        i+=1
+        vw.write(img)
+
+    vw.release()
+
 
 if __name__ == '__main__':
-    # Put extracted images into DATA_DIR/<folder> before running this
-    imgs = get_jpgs(config.DATA_DIR + "beachVolleyball1/")
+    number = 3 # Change this number to perform the stitch on different segments
+    ## Put extracted images into DATA_DIR/<folder> before running this
+    imgs = get_jpgs(config.DATA_DIR + "beachVolleyball" + str(number) + "/")
     cv2.ocl.setUseOpenCL(False) # A workaround for ORB feature detector error
     stitcher = TranslationStitcher(imgs)
-    stitcher.generate_panorama(get_netmask)
+    panorama_list = stitcher.generate_panorama(get_netmask)
+    
+    # Create the folder
+    d = os.path.dirname(config.DATA_DIR + "processedImages" + str(number) + "/")
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+    write_jpgs(config.DATA_DIR + "processedImages" + str(number) + "/", jpgs=panorama_list)
+    convertToVideo(config.DATA_DIR + "processedImages" + str(number) + "/")
     cv2.destroyAllWindows()
