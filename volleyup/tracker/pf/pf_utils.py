@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from __future__ import division
 import sys
-sys.append('../')
+sys.path.append('../../')
 
 import bisect
 import numpy as np
 import cv2
 
-from utils import get_roi
+from utils.utils import get_roi
 
 
 # Weight functions

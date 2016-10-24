@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 from __future__ import division
 import sys
-sys.append('../')
+sys.path.append('../../')
 
 import numpy as np
 import cv2
 
-import config
+from utils import config
 
-from utils import get_jpgs, draw_str, get_courtmask, get_playermask
+from utils.utils import get_jpgs, draw_str, get_courtmask, get_playermask
 from pf_utils import (uniform_weight, systematic_resample, multinomial_resample, uniform_displacement,
                       predict_color_hist, hsv_histogram, predict_mean_hue)
 
@@ -48,7 +48,7 @@ class ParticleFilter():
     """ Generic particle filter for object tracking for single object """
     def __init__(self, particle_generator,
                  img_boundary=(638, 356), N_particles=400, size=(20, 30),
-                 ref_img=cv2.imread("{}green.jpg".format(config.TEMPLATE_DIR)),
+                 ref_img=cv2.imread("{}lat_green2.png".format(config.TEMPLATE_DIR)),
                  transition_model=uniform_displacement,
                  resampling_handler=multinomial_resample,
                  prediction_model=predict_color_hist

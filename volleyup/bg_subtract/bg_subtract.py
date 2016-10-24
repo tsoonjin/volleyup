@@ -48,3 +48,16 @@ def median_bg_sub(frames, bg_hist=3, thresh_limit=60, wait=100):
         if k == 27:
             break
     cv2.destroyAllWindows()
+
+
+def frames_rowvectors(frames, channel=0):
+    return np.array([(cv2.resize(f, (100, 50)))[..., channel].ravel() for f in frames])
+
+
+def eigenbackground(frames):
+    y, x = frames[0].shape[:2]
+    mean = np.mean([f.ravel() for f in frames], axis=0)
+    mean = mean.reshape(y, x, 3)
+    cov = np.cov(np.column_stack([cv2.resize(f, (100, 50)).ravel() for f in frames]))
+    u, s, v = np.linalg.svd(cov)
+    return mean, u, s, v
