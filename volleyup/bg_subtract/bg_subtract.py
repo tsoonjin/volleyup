@@ -6,8 +6,9 @@ import cv2
 import numpy as np
 from collections import deque
 
+from rpcaADMM import rpcaADMM
 from utils import config
-from utils.utils import get_jpgs, workon_frames
+from utils.utils import get_jpgs, workon_frames, resize
 
 
 # Color ranges
@@ -61,3 +62,10 @@ def eigenbackground(frames):
     cov = np.cov(np.column_stack([cv2.resize(f, (100, 50)).ravel() for f in frames]))
     u, s, v = np.linalg.svd(cov)
     return mean, u, s, v
+
+
+def rpca(frame):
+    frame = resize(frame)
+    gray = cv2.GaussianBlur(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), (5, 5), 2)
+    res = rpcaADMM(gray)
+    return cv2.cvtColor(np.uint8(res['X1_admm']), cv2.COLOR_GRAY2BGR)
