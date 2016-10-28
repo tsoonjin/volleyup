@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+BG_DIR = 'data/bg/'
 TEMPLATE_DIR = 'data/templates/'
 STUB_DIR = 'data/stub/'
 PANORAMA_DIR = 'data/panorama/'

@@ -55,7 +55,7 @@ def systematic_resample(particles, weights):
 
 # Transition model
 
-def uniform_displacement(particles, img_boundary, const_dist=5):
+def uniform_displacement(particles, img_boundary, const_dist=10):
     """ Displace particle with const_dist in pixel """
     for p in particles:
         x_old = p.x

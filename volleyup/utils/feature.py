@@ -10,7 +10,8 @@ class FeatureDescriptor():
                          'akaze':   cv2.AKAZE_create(),
                          'surf':    cv2.xfeatures2d.SURF_create(600),
                          'orb':     cv2.ORB_create(400),
-                         'brisk':   cv2.BRISK_create()}
+                         'brisk':   cv2.BRISK_create(),
+                         'hog':     cv2.HOGDescriptor()}
         self.imgs = []
 
     def compute(self, img, feature='sift', mask=None):

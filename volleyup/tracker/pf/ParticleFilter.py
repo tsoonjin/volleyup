@@ -32,7 +32,7 @@ class PlayerParticle():
         """
         cv2.circle(canvas, (self.x, self.y), 2, config.RED, -1)
         if region:
-            cv2.rectangle(canvas, self.region[0], self.region[1], config.RED, 1)
+            cv2.rectangle(canvas, self.region[0], self.region[1], config.RED, 2)
 
     @staticmethod
     def generate(N_particles, img_boundary, size, weight_generator=None):
@@ -47,8 +47,8 @@ class PlayerParticle():
 class ParticleFilter():
     """ Generic particle filter for object tracking for single object """
     def __init__(self, particle_generator,
-                 img_boundary=(638, 356), N_particles=400, size=(20, 30),
-                 ref_img=cv2.imread("{}lat_green2.png".format(config.TEMPLATE_DIR)),
+                 img_boundary=(638, 356), N_particles=800, size=(30, 60),
+                 ref_img=cv2.imread("{}lat_green_far.png".format(config.TEMPLATE_DIR)),
                  transition_model=uniform_displacement,
                  resampling_handler=multinomial_resample,
                  prediction_model=predict_color_hist
@@ -61,6 +61,7 @@ class ParticleFilter():
             resampling_handler : callable to resample particles according to weight
         """
         print("N: {}\nBoundary: {}\nSize: {}".format(N_particles, img_boundary, size))
+        self.tracked = None
         self.particles = particle_generator(N_particles, img_boundary, size)
         self.ref_img = ref_img
         self.img_boundary = img_boundary
@@ -74,6 +75,10 @@ class ParticleFilter():
         # Prediction
         # self.predict(self.particles, img, np.mean(cv2.cvtColor(self.ref_img, cv2.COLOR_BGR2HSV)[..., 0]))
         self.predict(self.particles, img, hsv_histogram(self.ref_img))
+        self.particles = sorted(self.particles, key=lambda x: x.w, reverse=True)
+        self.particles = [p for p in self.particles if p.w > 0.3]
+        for p in self.particles[:5]:
+            p.draw(img, True)
         for p in self.particles:
             # draw_str(img, (p.x, p.y), "{0:.2f}".format(p.w))
             p.draw(img)
@@ -82,6 +87,7 @@ class ParticleFilter():
         sum_w = sum([p.w for p in self.particles])
         ps = self.resampling_handler(self.particles, [p.w/sum_w for p in self.particles], self.img_boundary)
         self.particles = [PlayerParticle(*p) for p in ps]
+        return img
 
 
 if __name__ == '__main__':

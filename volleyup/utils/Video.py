@@ -43,14 +43,16 @@ class Video():
         """ Reset video to first frame """
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
 
-    def write_frames(self, dirpath=None, extension='jpg'):
+    def write_frames(self, dirpath=None, extension='jpg', skip=0):
         """ Write raw frames to directory given
         Parameters
         ----------
-        dirpaths : directory path to save extracted images
-        type     : image extension
+        dirpaths  : directory path to save extracted images
+        extension : image extension
+        skip      : number of skipped frames
         """
         dirpath = dirpath if dirpath else '{}{}'.format(config.DATA_DIR, self.name)
+        res = []
         # Create directory if does not exists
         if not os.path.exists(os.path.abspath(dirpath)):
             print("Creating directory: {}".format(os.path.abspath(dirpath)))
@@ -60,10 +62,13 @@ class Video():
                 frame_id = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES) + 1)
                 ret, frame = self.cap.read()
                 cv2.imshow('f', frame)
-                cv2.waitKey(10)
-                cv2.imwrite("{}/{}.{}".format(dirpath, frame_id, extension), frame)
+                cv2.waitKey(1)
+                res.append(("{}/{}.{}".format(dirpath, frame_id, extension), frame))
+                # cv2.imwrite("{}/{}.{}".format(dirpath, frame_id, extension), frame)
                 if self.is_eov():
                     break
+            for r in res[0::skip]:
+                cv2.imwrite(*r)
             print('Successfully written frames')
         else:
             print('Directory is not empty')
@@ -86,11 +91,17 @@ class Video():
         fg_mask = np.where(diff > thresh, np.ones(curr_frame.shape[:2]) * 255, 0)
         return cv2.cvtColor(np.uint8(fg_mask), cv2.COLOR_GRAY2BGR)
 
-    @staticmethod
-    def process_video(frames, func, wait=5):
+    def process_video(self, func, wait=1):
         """ Apply function to each frame and display the image. Note that output should be BGR """
-        for frame in frames:
+        self.reset_video()
+        while True:
+            ret, frame = self.cap.read()
             cv2.imshow(func.__name__, func(frame))
             k = cv2.waitKey(wait)
+            if self.is_eov():
+                break
             if k == 27:
+                print("Terminated by user")
                 exit()
+        self.cap.release()
+        cv2.destroyAllWindows()

@@ -95,7 +95,7 @@ def display_channels(frames, wait=100):
     " Displayes BGR, HSV and LAB channels information given frames """
     r, c = frames[0].shape[:2]
     for f in frames:
-        out = cv2.resize(fuse_channels(f), (c * 2, r * 2))
+        out = cv2.resize(fuse_channels(f), (int(c * 2), int(r * 2)))
         cv2.imshow('channels', out)
         k = cv2.waitKey(wait)
         if k == 27:
@@ -117,7 +117,7 @@ def get_channel(img, channel):
 def fuse_channels(img):
     """ Returns bgr, hsv and lab channels of image in order """
     return np.vstack((get_bgr_stack(img), get_hsv_stack(img),
-                      get_lab_stack(img), get_salient_stack(img)))
+                      get_lab_stack(img), get_ycb_stack(img), get_opp_stack(img)))
 
 
 def get_bgr_stack(img):
@@ -143,6 +143,27 @@ def get_ycb_stack(img):
 
 def get_lab_stack(img):
     return get_bgr_stack(cv2.cvtColor(img, cv2.COLOR_BGR2LAB))
+
+
+def get_opp_stack(img):
+    """ Returns Intensity, R - G, B - Y """
+    b, g, r = cv2.split(img)
+    I = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    R = r - (g+b) / 2
+    R.clip(min=0, out=R)
+    G = g - (r+b) / 2
+    G.clip(min=0, out=G)
+    B = b - (r+g) / 2
+    B.clip(min=0, out=B)
+    Y = ((r+g) / 2) - (np.abs(r - g) / 2) - b
+    Y.clip(min=0, out=Y)
+    RG = R - G
+    RG.clip(min=0, out=RG)
+    BY = B - Y
+    BY.clip(min=0, out=BY)
+    return np.hstack((cv2.cvtColor(I, cv2.COLOR_GRAY2BGR),
+                      cv2.cvtColor(RG, cv2.COLOR_GRAY2BGR),
+                      cv2.cvtColor(BY, cv2.COLOR_GRAY2BGR)))
 
 
 def get_salient_stack(img):
@@ -195,3 +216,26 @@ def get_roi(img, top_left, bot_right):
 def resize(img):
     y, x = img.shape[:2]
     return cv2.resize(img, (int(x * RESIZE_FACTOR), int(y * RESIZE_FACTOR)))
+
+
+def vectorize(img):
+    """ Returns image as row vector and shape of original img """
+    y, x = img.shape[:2]
+    return np.array([img.ravel()]), y, x
+
+
+def calc_integral(img):
+    """ Returns single-channel integral image """
+    return cv2.integral(img)
+
+# Color conversion
+
+
+def normalize_bgr(img):
+    b, g, r = cv2.split(np.float32(img))
+    total_bgr = b + g + r
+    b /= total_bgr
+    g /= total_bgr
+    r /= total_bgr
+    return cv2.merge((cv2.convertScaleAbs(b * 255.0), cv2.convertScaleAbs(g * 255.0),
+                      cv2.convertScaleAbs(r * 255.0)))

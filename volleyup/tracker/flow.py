@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-""" Motion estimation module """
+import sys
+sys.path.append('../')
 import cv2
 import numpy as np
 
-import config
-from utils import draw_str
-
+from utils import config
+from utils.utils import draw_str
+from utils.preprocess import contrast_enhance
 
 class FarnebackTracker():
     """ Optical flow tracking using Gunner Farneback method """
@@ -55,6 +56,7 @@ class LKTracker():
             ret, frame = self.cap.read()
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             vis = frame.copy()
+            vis = contrast_enhance(vis)
 
             if len(self.tracks) > 0:
                 img0, img1 = self.prev_gray, frame_gray
