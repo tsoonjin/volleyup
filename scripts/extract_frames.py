@@ -16,6 +16,7 @@ if __name__ == '__main__':
         vidpath = args[0]
         vidname = get_basename(vidpath)
         dirpath = args[1] if len(args) > 1 else vidname
+        skip = int(args[2]) if len(args) > 2 else 0
         video = Video(vidpath)
         print("Processing video ...")
-        video.write_frames(dirpath)
+        video.write_frames(dirpath, skip=skip)
