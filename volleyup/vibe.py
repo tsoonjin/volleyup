@@ -102,7 +102,6 @@ class VibeBG:
 
             #eroded and dialated
             er = cv2.morphologyEx(self.segmentation_map, cv2.MORPH_OPEN, np.ones((5,5), np.uint8))
-
             cv2.imwrite(outdir + "/gf" + str(counter + 1) + ".png", thresh)
             cv2.imwrite(outdir + "/er" + str(counter + 1) + ".png", er)
             if cv2.waitKey(50) & 0xFF == ord('q'):
@@ -135,13 +134,146 @@ class VibeBG:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             er = cv2.erode(self.segmentation_map, kernel, iterations = 2)
             er = cv2.dilate(self.segmentation_map, kernel, iterations = 2)
-#            er = cv2.morphologyEx(self.segmentation_map, cv2.MORPH_OPEN, kernel)
+            #er = cv2.morphologyEx(self.segmentation_map, cv2.MORPH_OPEN, kernel)
             
             cv2.imwrite(outdir + "/gf" + str(counter + 1) + ".png", thresh)
             cv2.imwrite(outdir + "/er" + str(counter + 1) + ".png", er)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+
+class VibeFlow:
+    def __init__(self, nbsamples = 20, req_matches = 2, d_thresh = 20, ssample = 16, scale_factor = 2 ):
+        """
+        scale factor: radius increase of bg
+        """
+        self.nbsamples = nbsamples
+        self.req_matches = req_matches
+        self.d_thresh = d_thresh
+        self.ssample = ssample
+        self.lk_params = dict(winSize=(15, 15), maxLevel=2,
+                              criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+        self.st_params = dict( maxCorners = 100,
+                                qualityLevel = 0.3,
+                                minDistance = 7,
+                                blockSize = 7 )
+        self.scale_factor = scale_factor
+        assert(scale_factor % 2 == 0)
+
+    def i2s(self, x, y):
+        """
+        maps image coords to sample coords
+        """
+        return (x + self.ox, y + self.oy)
+
+
+    def shift_bg(self, dx, dy, image):
+        self.ox -= dx
+        self.oy -= dy
+        for y in range(self.height):
+            for x in range(self.width):
+                mx, my = self.i2s(x, y)
+                if self.initialized[my][mx] == 0:
+                    self.initialize_bg_pixel(x, y, image)
+                    self.initialized[my][mx] = 1
+
+
+
+    def initialize_bg_pixel(self, x, y, image):
+        #create mapped coords for scaled xy
+        mx, my = self.i2s(x, y)
+        height, width, *_ = image.shape
+        for i in range(2, self.nbsamples):
+            nx, ny  = get_rnd_neighbour(x, y, height, width)
+            self.samples[my][mx][i] = image[ny][nx]
+        self.samples[my][mx][0] = image[y][x]
+        self.samples[my][mx][1] = image[y][x]
+
+    def initialize_bg(self, image):
+        """
+        Initializes background from the first frame
+        """
+        self.height, self.width, *_ = image.shape
+        fheight, fwidth = self.height *(self.scale_factor * 2  + 1), self.width *(self.scale_factor * 2  + 1)
+        # determine new origins
+        self.ox, self.oy = self.width * self.scale_factor, self.height * self.scale_factor 
+
+        self.samples = np.array([[np.ones(self.nbsamples) for j in range(fwidth)] for i in range(fheight)])
+        self.initialized = np.zeros((fheight, fwidth))
+
+        for x in range(self.width):
+            for y in range(self.height):
+                self.initialize_bg_pixel(x,y, image)
+                mx, my = self.i2s(x,y)
+                self.initialized[y][x] = 1
+    
+    def vibe_flow(self, i0, i1):
+        height, width, *_ = i1.shape
+        self.segmentation_map = np.zeros_like(i1)
+        # Get flow between image 0 and image 1
+        # Perhaps handle the leftover shifts?
+        if i0 is None:
+            dx, dy = 0, 0
+        else:
+            p0 = cv2.goodFeaturesToTrack(i0, mask = None, **self.st_params)
+            p1, st, err = cv2.calcOpticalFlowPyrLK(i0, i1, p0, None, **self.lk_params)
+            good_new = p1[st == 1]
+            good_old = p0[st == 1]
+            change = [new - old for new, old in zip(good_new, good_old)]
+            dx = int(np.median([i[0] for i in change]))
+            dy = int(np.median([i[1] for i in change]))
+        self.shift_bg(dx, dy, i1)
+        print("Shifting bg ", dx, dy)
+        for x in range(width):
+            for y in range(height):
+                # Create mapped indicies to current sample space
+                cx, cy = self.i2s(x, y)
+                # BGFG classification
+                count = 0
+                for index in range(self.nbsamples):
+                    if count >= self.req_matches:
+                        break
+                    distance = abs(int(i1[y][x]) - int(self.samples[cy][cx][index]))
+                    if distance < self.d_thresh:
+                        count += 1
+
+                # if pixel is background
+                if count >= self.req_matches:
+                    # set pixel to background in segmentation map
+                    self.segmentation_map[y][x] = 0
+                    # Updating of BG model
+                    rint = randint(0, self.ssample-1)
+                    # Update current pixel model stochiastically
+                    if rint == 0:
+                        rint = randint(0, self.nbsamples-1)
+                        self.samples[cy][cx][rint] = i1[y][x]
+                    # Diffuse into neighbouring pixel model stochiastically
+                    rint = randint(0, self.ssample-1)
+                    if rint == 0:
+                        nx, ny = self.i2s(*get_rnd_neighbour(x, y, height, width))
+                        rint = randint(0, self.nbsamples-1)
+                        self.samples[ny][nx][rint] = i1[y][x]
+                # if pixel is foreground:
+                else:
+                    self.segmentation_map[y][x] = 255
+        print("NONZERO: ", np.count_nonzero(self.segmentation_map))
+
+    def pipeline_frames(self, frames):
+        frames = [cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) for frame in frames]
+        print("Initializing background")
+        self.initialize_bg(frames[0])
+        i0 = frames[0]
+        for frame in frames[1:]:
+            i1 = frame
+            self.vibe_flow(i0, i1)
+            cv2.imshow("segmap", self.segmentation_map)
+            cv2.imshow("curframe", frame)
+            if cv2.waitKey(50) & 0xFF == ord('q'):
+                break
+
+            i0 = i1
+
+        
 
 if __name__ == "__main__":
     video_path = "data/beachVolleyball1.mov"
@@ -156,14 +288,8 @@ if __name__ == "__main__":
 
     frames = bt_util.load_frame_folder("data/deduped_beachVolleyball1")
     print("Loaded frames")
-    vbg.pipeline_frames(frames)
+    # vbg.pipeline_frames(frames)
+    vbgf = VibeFlow(req_matches = 2)
+    vbgf.pipeline_frames(frames)
 
     # vbg.pipeline(cv2.VideoCapture(test_video), outdir = "data/tests/bg1")
-
-
-
-
-
-
-
-
