@@ -221,14 +221,27 @@ def get_netmask(img):
     hsv_yellow = cv2.cvtColor(np.uint8([[[ 200,220,230 ]]]), cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 0,200), (hsv_yellow[0][0][0]+15, 200, 255))
     """
-    
-    hsv_yellow = cv2.cvtColor(np.uint8([[[ 30,220,230 ]]]), cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 100,200), (hsv_yellow[0][0][0]+15, 255, 255))
     """
-    hsv_yellow = cv2.cvtColor(np.uint8([[[ 160,250,250 ]]]), cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 0,200), (hsv_yellow[0][0][0]+15, 255, 255))
+        Net + logo
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 20,55,120 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-20, 150,100), (hsv_yellow[0][0][0]+20, 255, 255))
     """
-    return mask
+    """
+        back border
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 120,75,140 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 120,100), (hsv_yellow[0][0][0]+15, 175, 200))
+    """
+    """
+        front border
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 120,50,140 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-20, 70, 100), (hsv_yellow[0][0][0]+20, 175, 200))
+    """
+    hsv_yellow = cv2.cvtColor(np.uint8([[[ 120,70,140 ]]]), cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), (hsv_yellow[0][0][0]-15, 50,100), (hsv_yellow[0][0][0]+15, 255, 255))
+    img_copy = img.copy()
+    res = cv2.bitwise_and(img_copy, img_copy, mask= mask)
+
+    return res
 
 
 # Image manipulations
