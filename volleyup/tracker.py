@@ -45,6 +45,7 @@ def median_bg_sub(frames, bg_hist=3, thresh_limit=60):
         out = np.hstack((f, canvas, cv2.cvtColor(np.uint8(bg), cv2.COLOR_GRAY2BGR)))
         bg_frames.append(curr)
         cv2.imshow(name, out)
+        cv2.imshow("mask", mask)
         k = cv2.waitKey(1)
         if k == 27:
             break
