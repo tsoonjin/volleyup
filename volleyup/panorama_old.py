@@ -84,7 +84,6 @@ class TranslationStitcher():
     
     def generate_panorama(self, mask_func, channel='hsv_s', feature='akaze'):
         panorama_img_list = []
-        homographyStack = []
         """ Generates image panorama
             Parameters
             ----------
@@ -122,12 +121,15 @@ class TranslationStitcher():
             else:
                 print "Not enough matching features"
             if H is not None:
-                homographyStack.append(H)
+                if resultingHomography is None:
+                    resultingHomography = np.matrix(H)
+                else:
+                    resultingHomography = resultingHomography * np.matrix(H)
+                
                 warpedB = imgB.copy()
                 warpedB = np.pad(warpedB, ((0,100),(500,0),(0,0)), mode='constant')
-                for ho in reversed(homographyStack[:-2]):
-                    warpedB = cv2.warpPerspective(warpedB, ho, (warpedB.shape[1], warpedB.shape[0]))
-                warpedB = cv2.warpPerspective(warpedB, homographyStack[0], (panorama_img.shape[1], panorama_img.shape[0]))
+                warpedB = cv2.warpPerspective(warpedB, resultingHomography, (panorama_img.shape[1], panorama_img.shape[0]))
+                
                 #panorama_img = np.pad(panorama_img, ((100,500),(100,100),(0,0)), mode='constant')
                 #panorama_img = self.overlay_image(panorama_img, warpedB)
                 panorama_img = copyOver(warpedB, panorama_img)
@@ -152,7 +154,7 @@ def convertToVideo(dirpath):
 
 
 if __name__ == '__main__':
-    number = 1 # Change this number to perform the stitch on different segments
+    number = 3 # Change this number to perform the stitch on different segments
     ## Put extracted images into DATA_DIR/<folder> before running this
     imgs = get_jpgs(config.DATA_DIR + "beachVolleyball" + str(number) + "/")
     cv2.ocl.setUseOpenCL(False) # A workaround for ORB feature detector error
