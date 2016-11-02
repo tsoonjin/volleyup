@@ -18,6 +18,15 @@ def imfill(im):
     im_floodfill_inv = cv2.bitwise_not(im_floodfill)
     return im | im_floodfill_inv
 
+def copyOver(source, destination):
+    result_grey = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
+    ret, mask = cv2.threshold(result_grey, 10, 255, cv2.THRESH_BINARY)
+    mask_inv = cv2.bitwise_not(mask)
+    roi = cv2.bitwise_and(source, source, mask=mask)
+    im2 = cv2.bitwise_and(destination, destination, mask=mask_inv)
+    result = cv2.add(im2, roi)
+    return result
+
 class CourtFinder:
     def process_frame(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -98,7 +107,7 @@ class TranslationStitcher():
         """
            Overlays overlayImage onto mainImage, assuming that important parts of overlayImage are not totally black i.e. (0,0,0)
         """
-        return np.where(overlayImage == [0,0,0], mainImage, overlayImage)
+        return np.where(overlayImage < [30,30,30], mainImage, overlayImage)
 
     def generate_panorama(self, mask_func, channel='hsv_s', feature='akaze'):
         panorama_img_list = []
@@ -118,13 +127,12 @@ class TranslationStitcher():
         sift = cv2.xfeatures2d.SIFT_create()# testing with sift instead of akaze
         panorama_img = self.imgs[0]
         resultingHomography = None
-        mask =  255 - cf.process_frame(panorama_img)
-        cv2.imshow('MASK', mask)
-        cv2.waitKey(0)
+        #mask =  255 - cf.process_frame(panorama_img)
+        #cv2.imshow('MASK', mask)
+        #cv2.waitKey(10)
         # Add in margins in all directions
+        #panorama_img = np.pad(panorama_img, ((100,0),(0,100),(0,0)), mode='constant')
         imgA = panorama_img.copy()
-        panorama_img = np.pad(panorama_img, ((100,100),(100,100),(0,0)), mode='constant')
-        
         
         panorama_img_list.append(panorama_img.copy())
         #imgA = panorama_img.copy()
@@ -148,7 +156,7 @@ class TranslationStitcher():
             grayA = cv2.cvtColor(imgA, cv2.COLOR_BGR2GRAY)
             grayB = cv2.cvtColor(imgB, cv2.COLOR_BGR2GRAY)
             
-            goodFeatures = cv2.goodFeaturesToTrack(grayA, mask=mask, **params)
+            goodFeatures = cv2.goodFeaturesToTrack(imgA, mask=mask, **params)
             if goodFeatures is None:
                 print "Error, no good features to track."
                 continue
@@ -171,10 +179,11 @@ class TranslationStitcher():
             if H is not None:
                 homographyStack.append(H)
                 warpedB = imgB.copy()
-                warpedB = np.pad(warpedB, ((100,100),(100,100),(0,0)), mode='constant')
+                #warpedB = np.pad(warpedB, ((100,0),(0,100),(0,0)), mode='constant')
                 for ho in reversed(homographyStack):
                     warpedB = cv2.warpPerspective(warpedB, ho, (panorama_img.shape[1], panorama_img.shape[0]))
-                panorama_img = self.overlay_image(panorama_img, warpedB)
+                #panorama_img = self.overlay_image(panorama_img, warpedB)
+                panorama_img = copyOver(warpedB, panorama_img)
                 
                 panorama_img_list.append(panorama_img.copy())
             else:
@@ -199,7 +208,7 @@ def convertToVideo(dirpath):
 
 
 if __name__ == '__main__':
-    number = 2 # Change this number to perform the stitch on different segments
+    number = 3 # Change this number to perform the stitch on different segments
     ## Put extracted images into DATA_DIR/<folder> before running this
     imgs = get_jpgs(config.DATA_DIR + "beachVolleyball" + str(number) + "/")
     cv2.ocl.setUseOpenCL(False) # A workaround for ORB feature detector error
@@ -210,6 +219,10 @@ if __name__ == '__main__':
     d = os.path.dirname(config.DATA_DIR + "processedImages" + str(number) + "/")
     if not os.path.exists(d):
         os.makedirs(d)
+    else:
+        filelist = os.listdir(d)
+        for file in filelist:
+            os.remove(d + "/" + file)
 
     write_jpgs(config.DATA_DIR + "processedImages" + str(number) + "/", jpgs=panorama_list)
     convertToVideo(config.DATA_DIR + "processedImages" + str(number) + "/")
