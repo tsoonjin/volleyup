@@ -4,7 +4,8 @@ import cv2
 import numpy as np
 import math
 import config
-from utils import get_channel, get_jpgs, get_courtmask
+import os
+from utils import get_channel, get_jpgs, get_netmask
 from feature import FeatureDescriptor
 
 
@@ -48,7 +49,7 @@ class TranslationStitcher():
         #lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
         #lines = cv2.HoughLines(edges,1,np.pi/180,0)
         #lines = cv2.HoughLines(edges,0.01,np.pi/720,100)
-        isProbabilistic = False
+        isProbabilistic = True
         if not isProbabilistic:
             lines = cv2.HoughLines(edges,0.04,np.pi/360,100)
             for rho,theta in lines[0]:
@@ -178,6 +179,8 @@ class TranslationStitcher():
 
         """
         panorama_img = self.imgs[0]
+        panorama_img_list = []
+        panorama_img_list.append(panorama_img.copy())
         prev_img = panorama_img.copy()
         for index, next_img in enumerate(self.imgs[1:]):
             img1 = panorama_img.copy()
@@ -195,16 +198,22 @@ class TranslationStitcher():
                                                               kp2, matches)
             if H is not None:
                 (size, offset) = self.calculate_size(panorama_img.shape, panorama_img.shape, H)
-                if index == 15:
-                    self.debug_matching(img1, img2, mask_func, channel, feature)
-                    return panorama_img
-                panorama_img = self.merge_images_translation(panorama_img, next_img, offset)
+                if index == 100:
+                    #self.debug_matching(img1, img2, mask_func, channel, feature)
+                    return panorama_img_list
+                next_img = cv2.warpPerspective(next_img, H,
+                                              (panorama_img.shape[1], panorama_img.shape[0]),
+                                              panorama_img, borderMode=cv2.BORDER_TRANSPARENT)
+                
+                #panorama_img = self.merge_images_translation(panorama_img, next_img, offset)
                 #cv2.imshow('panorama', base_img)
                 #cv2.waitKey(10)
                 print("merged img ",index)
             #panorama_img = next_img.copy()
             prev_img = next_img.copy()
-        return panorama_img
+            panorama_img_list.append(panorama_img.copy())
+        print("final list len",len(panorama_img_list))
+        return panorama_img_list
 
     def get_avg_translation(self, kp1, kp2, matches):
         mean_x = np.mean([kp1[m.queryIdx].pt[0] - kp2[m.trainIdx].pt[0] for m in matches])
@@ -226,10 +235,40 @@ class TranslationStitcher():
         matched = cv2.drawMatches(imgA, kp1, imgB, kp2, matches, None, flags=2)
         cv2.imshow('matched | warped', np.vstack((matched, np.hstack((warpedA, warpedB)))))
         cv2.waitKey(wait)
+def convertToVideo(dirpath, segment, type):
+    imgs = get_jpgs(dirpath)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    vw = cv2.VideoWriter("output_" + type + str(segment) + ".mov", fourcc, 30, (imgs[0].shape[1], imgs[0].shape[0]))
+    print("Writing video ...")
+    i = 1
+    for img in imgs:
+        print ("Writing image", i)
+        i+=1
+        vw.write(img)
+    
+    vw.release()
 
-imgs = get_jpgs(config.INDVIDUAL_VIDEOS['3'], skip=3)
+def write_jpgs(dirpath, jpgs):
+    """ 
+    Writes all images to the given dirpath
+        
+    """
+    if os.path.exists(os.path.abspath(dirpath)):
+        print ("no of imgs",len(jpgs))
+        for i in range(len(jpgs)):
+            filename = dirpath + str(i) + ".jpg"
+            cv2.imwrite(filename, jpgs[i])
+        print('Wrote {} images to {}'.format(len(jpgs), dirpath))
+    print('Directory {} does not exist'.format(os.path.abspath(dirpath)))
+
+def get_nomask(img):
+    return img
+imgs = get_jpgs(config.INDVIDUAL_VIDEOS['3'], skip=0)
 stitcher = TranslationStitcher(imgs)
-mosaic_img = stitcher.generate_mosaic(get_courtmask)
-cv2.imshow('image',mosaic_img)
-cv2.waitKey(0)
+panorama_list = stitcher.generate_mosaic(get_nomask)
+number = 3
+write_jpgs(config.DATA_DIR + "processedImages" + str(number) + "/", jpgs=panorama_list)
+convertToVideo(config.DATA_DIR + "processedImages" + str(number) + "/", number, "akaze")
+#cv2.imshow('image',mosaic_img)
+#cv2.waitKey(0)
 cv2.destroyAllWindows()
