@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import csv
 import cv2
 import numpy as np
 import signal
@@ -33,17 +34,38 @@ def main(vid_id=1):
     white_far = cv2.imread('{}bra_white_far1.png'.format(config.TEMPLATE_DIR))
     green_near = cv2.imread('{}lat_green_near1.png'.format(config.TEMPLATE_DIR))
     green_far = cv2.imread('{}lat_green_far1.png'.format(config.TEMPLATE_DIR))
+    red_near = cv2.imread('{}usa_red_near5.png'.format(config.TEMPLATE_DIR))
+    red_far = cv2.imread('{}usa_red_far5.png'.format(config.TEMPLATE_DIR))
     signal.signal(signal.SIGINT, handle_SIGINT)
-    frames = get_jpgs(config.INDVIDUAL_VIDEOS[vid_id], skip=5)
-    video = Video('{}.mov'.format(config.INDVIDUAL_VIDEOS['3']))
-    pf_white_far = ParticleFilter(PlayerParticle.generate, ref_img=white_far,
-                                  img_boundary=(frames[0].shape[1], frames[0].shape[0]))
-    pf_green_near = ParticleFilter(PlayerParticle.generate, ref_img=green_near,
-                                   img_boundary=(frames[0].shape[1], frames[0].shape[0]))
-    pf_green_far = ParticleFilter(PlayerParticle.generate, ref_img=green_far,
-                                  img_boundary=(frames[0].shape[1], frames[0].shape[0]))
-    display_channels(frames)
-    # display_features(frames, channel='gray', feature='orb')
+    frames = get_jpgs(config.INDVIDUAL_VIDEOS[vid_id])
+    pf1 = ParticleFilter(PlayerParticle.generate, ref_img=white_far, color=config.BRAZIL['color'],
+                         img_boundary=(frames[0].shape[1], frames[0].shape[0]),
+                         size=(30, 40))
+    pf2 = ParticleFilter(PlayerParticle.generate, ref_img=white_far, color=config.BRAZIL['color'],
+                         img_boundary=(frames[0].shape[1], frames[0].shape[0]),
+                         size=(30, 40))
+    pf3 = ParticleFilter(PlayerParticle.generate, ref_img=green_far, color=config.LATVIA['color'],
+                         img_boundary=(frames[0].shape[1], frames[0].shape[0]),
+                         size=(30, 60))
+    pf4 = ParticleFilter(PlayerParticle.generate, ref_img=green_near, color=config.LATVIA['color'],
+                         img_boundary=(frames[0].shape[1], frames[0].shape[0]))
+
+    centers = []
+    for i, f in enumerate(frames):
+        print(i + 1)
+        _, c1 = pf1.process(f)
+        _, c2 = pf2.process(f)
+        _, c3 = pf3.process(f)
+        _, c4 = pf4.process(f)
+        centers.append((c1[0], c1[1], c2[0], c2[1], c3[0], c3[1], c4[0], c4[1]))
+        print(centers)
+        # cv2.imshow('res', f)
+        # cv2.waitKey(1)
+
+    with open('data/csv/beachVolleyball1.csv', 'wb') as csvfile:
+        wr = csv.writer(csvfile, csv.QUOTE_NONE)
+        for c in centers:
+            wr.writerow(c)
 
 
 def handle_SIGINT(signal, frame):

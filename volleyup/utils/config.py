@@ -17,6 +17,10 @@ GREEN = [0, 255, 0]
 ORANGE = [0, 69, 255]
 PURPLE = [204, 0, 204]
 WHITE = [255, 255, 255]
+BRAZIL = {'color': BLUE}
+USA = {'color': RED}
+LATVIA = {'color': GREEN}
+ESPANYOL = {'color': ORANGE}
 
 ''' OBJECT HSV COLOR RANGES '''
 OBJECT_COLOR = {'court': [(20, 0, 100), (50, 100, 255)]}
@@ -28,3 +32,5 @@ RESIZE_FACTOR = 0.5
 # Color ranges
 COLOR_RANGE = {'red': [(160, 0, 0), (180, 255, 255)], 'green': [(40, 0, 0), (80, 255, 255)],
                'white': [(0, 0, 200), (180, 30, 255)], 'sand': [(30, 0, 100), (50, 255, 255)]}
+
+''' Video specific configurations '''

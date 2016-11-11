@@ -10,6 +10,14 @@ import cv2
 from utils.utils import get_roi
 
 
+def get_random_pos(img_boundary, size):
+    """ Returns position constrained within img_boundary """
+    border_offset = (int(size[0] / 2), int(size[1] / 2))
+    x = np.random.randint(border_offset[0], img_boundary[0] - border_offset[0])
+    y = np.random.randint(border_offset[1], img_boundary[1] - border_offset[1])
+    return x, y
+
+
 # Weight functions
 
 def uniform_weight(N_particles):
@@ -19,16 +27,17 @@ def uniform_weight(N_particles):
 # Resampling functions
 
 def multinomial_resample(particles, weights, img_boundary):
+    color = particles[0].color
+    size = particles[0].size
     cumulative_sum = np.cumsum(weights)
     new_particles = []
     for i in range(len(particles)):
         old_p = particles[bisect.bisect_left(cumulative_sum, np.random.uniform(0, 1))]
         if old_p.w > 0.3:
-            new_particles.append([old_p.x, old_p.y, 1/len(particles), old_p.size])
+            new_particles.append([old_p.x, old_p.y, 1/len(particles), old_p.size, color])
         else:
-            rand_x = np.random.randint(img_boundary[0])
-            rand_y = np.random.randint(img_boundary[1])
-            new_particles.append([rand_x, rand_y, 1/len(particles), old_p.size])
+            rand_x, rand_y = get_random_pos(img_boundary, size)
+            new_particles.append([rand_x, rand_y, 1/len(particles), old_p.size, color])
     return new_particles
 
 
@@ -64,8 +73,8 @@ def uniform_displacement(particles, img_boundary, const_dist=10):
         y_new = int(y_old + np.random.uniform(-const_dist, const_dist) + gaussian_noise())
         p.x = max(0, min(x_new, img_boundary[0]))
         p.y = max(0, min(y_new, img_boundary[1]))
-        p.region = ((int(p.x - p.size[0]/2), int(p.y - p.size[1]/2)),
-                    (int(p.x + p.size[0]/2), int(p.y + p.size[1]/2)))
+        p.region = ((int(p.x - p.size[0]/2), int(p.y - p.size[1])),
+                    (int(p.x + p.size[0]/2), int(p.y)))
 
 
 # Noise model
