@@ -22,7 +22,7 @@ class TranslationStitcher():
         good_matches = [m for m, n in matches if m.distance < ratio * n.distance]
         return good_matches
     
-    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches, min_good_match=4, reproj_thresh=5.0):
+    def calc_homography(self, imgA, imgB, kp1, kp2, good_matches, min_good_match=4, reproj_thresh=3.0):
         """
             Calculates homography when there are at least 8 matched feature points (4 in each image)
             Parameters
@@ -49,7 +49,6 @@ class TranslationStitcher():
             channel   : channel used for processing
             feature   : feature detector for interest point detection
             """
-        sift = cv2.xfeatures2d.SIFT_create()# testing with sift instead of akaze
         panorama_img = self.imgs[0]
         resultingHomography = None
         panorama_img = np.pad(panorama_img, ((200,200),(800,800),(0,0)), mode='constant')
@@ -61,14 +60,13 @@ class TranslationStitcher():
             masked_imgB = cv2.cvtColor(imgB, cv2.COLOR_RGB2GRAY)
             key_points_A, desc1 = self.ft.compute(imgA, feature, masked_imgA)
             key_points_B, desc2 = self.ft.compute(imgB, feature, masked_imgB)
-            #key_points_A, desc1 = sift.detectAndCompute(masked_imgA, None)
-            #key_points_B, desc2 = sift.detectAndCompute(masked_imgB, None)
             # Match feature descriptors and filter which keeps the good ones
             matching_features = self.match_features(desc2, desc1)
             
-            #matched = cv2.drawMatches(imgB, key_points_B, imgA, key_points_A, matching_features, None, flags=2)
-            #cv2.imshow('Matched', matched)
-            #cv2.waitKey(10)
+            # Uncomment these to see matches
+            # matched = cv2.drawMatches(imgB, key_points_B, imgA, key_points_A, matching_features, None, flags=2)
+            # cv2.imshow('Matched', matched)
+            # cv2.waitKey(10)
             
             # Calculate the homography matrix and affine required to transform imgB to imgA (so that the matching points overlap)
             if len(matching_features) >= 4:
@@ -92,7 +90,7 @@ class TranslationStitcher():
 def convertToVideo(dirpath, segment, type):
     imgs = get_jpgs(dirpath)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    vw = cv2.VideoWriter("output_" + type + str(segment) + ".mov", fourcc, 30, (imgs[0].shape[1], imgs[0].shape[0]))
+    vw = cv2.VideoWriter("output_" + type + str(segment) + ".mov", fourcc, 60, (imgs[0].shape[1], imgs[0].shape[0]))
     print "VideoWriter is opened:", vw.isOpened()
     print("Writing video ...")
     i = 1
