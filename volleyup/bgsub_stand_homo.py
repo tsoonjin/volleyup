@@ -175,17 +175,18 @@ class HomoBG:
             for i in range(-self.window_size, 0):
                 self.backgrounds_gray[i] = cv2.warpPerspective(self.backgrounds_gray[i], homography, (rows, cols))
             bgmed_gray = np.median(self.backgrounds_gray[-self.window_size:], axis = 0)
-            cv2.imshow("bgmed_gray", np.uint8(bgmed_gray))
+            # cv2.imshow("bgmed_gray", np.uint8(bgmed_gray))
         self.backgrounds_gray.append(frame_gray)
         if self.counter > self.window_size:
             return (filter_funct(subtract(frame_gray, bgmed_gray)), frame_gray, frame)
         return None
 
 class BallFinder:
-    def __init__(self, filter_funct = er_filter, window_size = 5):
+    def __init__(self, filter_funct = er_filter, window_size = 5, svm_path = "data/svm/SVM_HN_second.pkl"):
         self.filter_funct = filter_funct
         self.bgsub = HomoBG(window_size = 5)
         self.init_frame()
+        self.svm = joblib.load(svm_path)
     
     def init_frame(self):
         self.bgsub.init_frame()
@@ -204,11 +205,23 @@ class BallFinder:
         cv2.imshow("subbed", subbed)
 
         circles = cv2.HoughCircles(subbed, cv2.HOUGH_GRADIENT, 1, 20, param1=100, param2 =10, minRadius =1, maxRadius = 7)
+
         if circles is not None:
-            print(circles)
-            return circles[0]
+            res = []
+            for x,y,r in circles[0]:
+                im = gray[y-25:y+25, x-25:x+25]
+                if im.shape != (50, 50):
+                    print("Skip_shape")
+                    continue
+                features = hog(im).reshape(1, -1)
+                if len(features[0]) != 1296:
+                    print("Skip_features", len(features[0]))
+                    continue
+                if self.svm.predict(features)[0]:
+                    res.append((x,y,r))
+            return res
         else:
-            print(circles)
+            # print(circles)
             return circles
 
 
@@ -244,78 +257,76 @@ if __name__ == "__main__":
             break
         frames.append(frame)
 
-    # bf = BallFinder()
+    bf = BallFinder(window_size = 3)
     
-    # for frame in frames:
-    #     circles = bf.run_frame(frame)
-    #     if circles is not None:
-    #         for (x,y,r) in circles:
-    #             cv2.circle(frame, (x,y), r, (0,0,255), 2)
-
-    #     cv2.imshow("draw", frame)
-    #     k = cv2.waitKey(10)
-    #     if k == 27:
-    #         print("Terminated by user")
-    #         exit()
-
-
-
-    frame
-
-    for num, (i, gframe, frame) in enumerate(a.run_frames(frames, filter_funct = er_filter, startfrom = startfrom)):
-    # mov
-    # for num, (i, gframe, frame) in enumerate(a.run(video_path, filter_funct = er_filter, startfrom = startfrom)):
-        oframe = frame.copy()
-        #handle the edges because of homology bs
-        i[0:5, :] = 0
-        i[:, 628:632] = 0
-        i[:, 0:7] = 0
-        i[295:300, :] = 0
-
-
-        frame[0:5, :] = 0
-        frame[:, 628:632] = 0
-        frame[:, 0:7] = 0
-        frame[295:300, :] = 0
-
-        i[250:300, 532:632] = 0
-        frame[250:300, 532:632] = 0
-
-        cv2.imshow("test", i)
-        circles = cv2.HoughCircles(i, cv2.HOUGH_GRADIENT, 1, 20, param1=100, param2 =10, minRadius =1, maxRadius = 7)
+    for frame in frames:
+        circles = bf.run_frame(frame)
         if circles is not None:
-            print(circles)
-            for (x, y, r) in circles[0]:
-                target_image = cv2.cvtColor(frame[y-25:y+25, x-25:x+25], cv2.COLOR_BGR2GRAY)
-                if target_image is None or target_image.shape != (50, 50):
-                    continue
-                if svm.predict(hog(target_image).reshape(1, -1))[0]:
-                    cv2.circle(frame, (x,y), r, (0, 0, 255), 2)
-#                cv2.circle(frame, (x,y), r, (0, 0, 255), 2)
+            for (x,y,r) in circles:
+                cv2.circle(frame, (x,y), r, (0,0,255), 2)
+
         cv2.imshow("draw", frame)
-        #Write outputs
-        # cv2.imwrite(os.path.join(output_dir, "{}.png".format(str(num).zfill(4))), frame)
-
-        #Write train/test data
-        try:
-            if circles is not None:
-                print(circles)
-                for (x, y, r) in circles[0]:
-                    image = oframe[y-50:y+50, x-50:x+50]
-                    image2 = oframe.copy()
-                    cv2.circle(image2, (x, y), 4, (0, 0, 255), 3)
-                    image2 = image2[y-50:y+50, x-50:x+50]
-                    # cv2.imshow("image", image2)
-                    # cv2.imwrite(os.path.join(tt_dir, "{}.png".format(str(num).zfill(4))), image)
-                    # cv2.imwrite(os.path.join(tt_dir, "{}_drawn.png".format(str(num).zfill(4))), image2)
-
-        except Exception as err:
-            print(err, x, y, frame.shape)
-
-
-
-
         k = cv2.waitKey(10)
         if k == 27:
             print("Terminated by user")
             exit()
+
+
+#     # frame
+#     for num, (i, gframe, frame) in enumerate(a.run_frames(frames, filter_funct = er_filter, startfrom = startfrom)):
+#     # mov
+#     # for num, (i, gframe, frame) in enumerate(a.run(video_path, filter_funct = er_filter, startfrom = startfrom)):
+#         oframe = frame.copy()
+#         #handle the edges because of homology bs
+#         i[0:5, :] = 0
+#         i[:, 628:632] = 0
+#         i[:, 0:7] = 0
+#         i[295:300, :] = 0
+
+
+#         frame[0:5, :] = 0
+#         frame[:, 628:632] = 0
+#         frame[:, 0:7] = 0
+#         frame[295:300, :] = 0
+
+#         i[250:300, 532:632] = 0
+#         frame[250:300, 532:632] = 0
+
+#         cv2.imshow("test", i)
+#         circles = cv2.HoughCircles(i, cv2.HOUGH_GRADIENT, 1, 20, param1=100, param2 =10, minRadius =1, maxRadius = 7)
+#         if circles is not None:
+#             print(circles)
+#             for (x, y, r) in circles[0]:
+#                 target_image = cv2.cvtColor(frame[y-25:y+25, x-25:x+25], cv2.COLOR_BGR2GRAY)
+#                 if target_image is None or target_image.shape != (50, 50):
+#                     continue
+#                 if svm.predict(hog(target_image).reshape(1, -1))[0]:
+#                     cv2.circle(frame, (x,y), r, (0, 0, 255), 2)
+# #                cv2.circle(frame, (x,y), r, (0, 0, 255), 2)
+#         cv2.imshow("draw", frame)
+#         #Write outputs
+#         # cv2.imwrite(os.path.join(output_dir, "{}.png".format(str(num).zfill(4))), frame)
+
+#         #Write train/test data
+#         try:
+#             if circles is not None:
+#                 print(circles)
+#                 for (x, y, r) in circles[0]:
+#                     image = oframe[y-50:y+50, x-50:x+50]
+#                     image2 = oframe.copy()
+#                     cv2.circle(image2, (x, y), 4, (0, 0, 255), 3)
+#                     image2 = image2[y-50:y+50, x-50:x+50]
+#                     # cv2.imshow("image", image2)
+#                     # cv2.imwrite(os.path.join(tt_dir, "{}.png".format(str(num).zfill(4))), image)
+#                     # cv2.imwrite(os.path.join(tt_dir, "{}_drawn.png".format(str(num).zfill(4))), image2)
+
+#         except Exception as err:
+#             print(err, x, y, frame.shape)
+
+
+
+
+#         k = cv2.waitKey(10)
+#         if k == 27:
+#             print("Terminated by user")
+#             exit()
