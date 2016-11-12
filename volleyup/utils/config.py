@@ -8,6 +8,9 @@ DATA_DIR = 'data/'
 INPUT_DATA = 'data/beachVolleyballFull.mov'
 INPUT_IMGS = 'data/beachVolleyballFull'
 INDVIDUAL_VIDEOS = {'{}'.format(i): 'data/beachVolleyball{}'.format(i) for i in range(1, 8)}
+IMG_SIZE = (600, 300)
+IMG_BOUNDARY = {1: (632, 300), 2: (636, 296), 3: (636, 294), 4: (638, 296), 5: (636, 354),
+                6: (636, 350), 7: (638, 356)}
 
 '''BGR COLOR CODES'''
 RED = [0, 0, 255]
@@ -32,5 +35,3 @@ RESIZE_FACTOR = 0.5
 # Color ranges
 COLOR_RANGE = {'red': [(160, 0, 0), (180, 255, 255)], 'green': [(40, 0, 0), (80, 255, 255)],
                'white': [(0, 0, 200), (180, 30, 255)], 'sand': [(30, 0, 100), (50, 255, 255)]}
-
-''' Video specific configurations '''
