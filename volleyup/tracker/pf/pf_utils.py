@@ -9,6 +9,8 @@ import cv2
 
 from utils.utils import get_roi
 
+# Configuration functions
+
 
 def get_random_pos(img_boundary, size):
     """ Returns position constrained within img_boundary """
@@ -19,6 +21,12 @@ def get_random_pos(img_boundary, size):
 
 
 # Weight functions
+
+def normalize_particles(particles):
+    """ Normalizes weights of particles to sum to 1 """
+    sum_w = max([p.w for p in particles])
+    return [p.w/sum_w for p in particles]
+
 
 def uniform_weight(N_particles):
     return 1 / N_particles
@@ -79,7 +87,7 @@ def uniform_displacement(particles, img_boundary, const_dist=10):
 
 # Noise model
 
-def gaussian_noise(sigma=0.2):
+def gaussian_noise(sigma=0.5):
     return np.random.normal(0, sigma)
 
 

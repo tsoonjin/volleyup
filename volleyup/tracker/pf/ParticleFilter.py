@@ -11,7 +11,7 @@ from utils import config
 from bg_subtract.bg_subtract import gmm_mog2
 from utils.utils import get_jpgs, draw_str, get_courtmask, get_playermask
 from pf_utils import (uniform_weight, systematic_resample, multinomial_resample, uniform_displacement,
-                      predict_color_hist, hsv_histogram, predict_mean_hue)
+                      predict_color_hist, hsv_histogram, predict_mean_hue, normalize_particles)
 
 
 class PlayerParticle():
@@ -76,20 +76,24 @@ class ParticleFilter():
         self.resampling_handler = resampling_handler
         self.predict = prediction_model
 
-    def process(self, img):
+    def process(self, img, detected=None):
         # Displacement
         self.transition(self.particles, self.img_boundary)
         # Prediction
         # self.predict(self.particles, img, np.mean(cv2.cvtColor(self.ref_img, cv2.COLOR_BGR2HSV)[..., 0]))
         self.predict(self.particles, img, hsv_histogram(self.ref_img))
         self.particles = sorted(self.particles, key=lambda x: x.w, reverse=True)
-        high_ps = [p for p in self.particles if p.w > 0.3]
-        center = (high_ps[0].x, high_ps[0].y) if len(high_ps) > 0 else (-1, -1)
-        for p in high_ps[:1]:
-            p.draw(img, True)
-        for p in self.particles:
-            # draw_str(img, (p.x, p.y), "{0:.2f}".format(p.w))
-            # p.draw(img)
+        max_w = max([p.w for p in self.particles])
+        high_ps = [p for p in self.particles if p.w > 0.8*max_w]
+        high_ps = sorted(high_ps, key=lambda x: x.w, reverse=True)
+        center = (-1, -1)
+        if high_ps[0].w > 0.4:
+            center = self.weighted_center(high_ps[:20])
+            region = self.calc_region(center[0], center[1], self.particles[0].size)
+            cv2.rectangle(img, region[0], region[1], self.particles[0].color, 2)
+            cv2.circle(img, (center[0], center[1]), 3, config.PURPLE, -1)
+        for p in high_ps[:20]:
+            # p.draw(img, True)
             pass
 
         # Resampling
@@ -98,14 +102,54 @@ class ParticleFilter():
         self.particles = [PlayerParticle(*p) for p in ps]
         return img, center
 
+    def calc_region(self, x, y, size):
+        return ((int(x - size[0]/2), int(y - size[1])), (int(x + size[0]/2), y))
+
+    def weighted_center(self, particles):
+        sum_w = sum([p.w for p in particles])
+        weights = [p.w / sum_w for p in particles]
+        x = sum([w*p.x for w, p in zip(weights, particles)])
+        y = sum([w*p.y for w, p in zip(weights, particles)])
+        return (int(x), int(y))
+
+
+def generate_player_config(vid_id, ref_img_path, color=config.PURPLE, size=(30, 60)):
+    img_boundary = config.IMG_BOUNDARY[vid_id]
+    ref_img = cv2.imread('{}{}'.format(config.TEMPLATE_DIR, ref_img_path))
+    return ParticleFilter(PlayerParticle.generate, img_boundary=img_boundary,
+                          ref_img=ref_img, color=color, size=size)
+
+
+''' Video specific configurations '''
+VID_PFS = {'1': [generate_player_config(1, 'bra_white_far1_1.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(1, 'bra_white_far1_2.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(1, 'lat_green_far1.png', config.LATVIA['color']),
+                 generate_player_config(1, 'lat_green_near1.png', config.LATVIA['color'])],
+           '2': [generate_player_config(2, 'bra_white_far2_1.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(2, 'bra_white_far2.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(2, 'lat_green_far2.png', config.LATVIA['color']),
+                 generate_player_config(2, 'lat_green_near2.png', config.LATVIA['color'])],
+           '3': [generate_player_config(3, 'bra_white_far3.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(3, 'bra_white_near3.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(3, 'lat_green_far3.png', config.LATVIA['color'], size=(30, 40)),
+                 generate_player_config(3, 'lat_green_near3.png', config.LATVIA['color'], size=(30, 40))],
+           '4': [generate_player_config(4, 'bra_white_far4.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(4, 'bra_white_near4.png', config.BRAZIL['color'], size=(30, 40)),
+                 generate_player_config(4, 'lat_green_far4.png', config.LATVIA['color'], size=(30, 40)),
+                 generate_player_config(4, 'lat_green_near4.png', config.LATVIA['color'], size=(30, 40))],
+           '5': [generate_player_config(5, 'esp_white_far5_1.png', config.ESPANYOL['color'], size=(20, 30)),
+                 generate_player_config(5, 'esp_white_far5_2.png', config.ESPANYOL['color'], size=(20, 30)),
+                 generate_player_config(5, 'usa_red_far5.png', config.USA['color'], size=(25, 45)),
+                 generate_player_config(5, 'usa_red_near5.png', config.USA['color'], size=(30, 60))],
+           '6': [generate_player_config(6, 'esp_white_near6.png', config.ESPANYOL['color'], size=(30, 40)),
+                 generate_player_config(6, 'esp_white_far6.png', config.ESPANYOL['color'], size=(30, 40)),
+                 generate_player_config(6, 'usa_red_far6.png', config.USA['color'], size=(30, 40)),
+                 generate_player_config(6, 'usa_red_near6.png', config.USA['color'], size=(30, 40))],
+           '7': [generate_player_config(7, 'esp_white_near7.png', config.ESPANYOL['color'], size=(30, 40)),
+                 generate_player_config(7, 'esp_white_far7.png', config.ESPANYOL['color'], size=(30, 40)),
+                 generate_player_config(7, 'usa_red_far7.png', config.USA['color'], size=(30, 40)),
+                 generate_player_config(7, 'usa_red_near7.png', config.USA['color'], size=(30, 40))]}
+
 
 if __name__ == '__main__':
-    imgs = get_jpgs(config.INDVIDUAL_VIDEOS['1'])
-    imgs = get_jpgs(config.INPUT_IMGS)
-    pf = ParticleFilter(PlayerParticle.generate, img_boundary=(imgs[0].shape[1], imgs[0].shape[0]))
-    for img in imgs:
-        pf.process(img)
-        cv2.imshow('particle filter', img)
-        k = cv2.waitKey(1)
-        if k == 27:
-            break
+    pass
