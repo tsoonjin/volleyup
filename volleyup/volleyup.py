@@ -37,13 +37,15 @@ def main(vid_id=1):
         pf1, pf2, pf3, pf4 = ParticleFilter.VID_PFS[str(index)]
         csvfile = open('{}beachVolleyball{}_pos.txt'.format('data/csv/', index), 'wb')
         wr = csv.writer(csvfile, csv.QUOTE_NONE)
-        for i, f in enumerate(frames[1100:]):
+        for i, f in enumerate(frames):
             _, c1 = pf1.process(f)
             _, c2 = pf2.process(f)
             _, c3 = pf3.process(f)
             _, c4 = pf4.process(f)
+            # cv2.imshow('res', f)
+            # cv2.waitKey(1)
             print('{}/{} VIDEO{}'.format(i + 1, len(frames), index))
-            wr.writerow((c1[0], c1[1], c2[0], c2[1], c3[0], c3[1], c4[0], c4[1]))
+            # wr.writerow((c1[0], c1[1], c2[0], c2[1], c3[0], c3[1], c4[0], c4[1]))
 
 
 def handle_SIGINT(signal, frame):

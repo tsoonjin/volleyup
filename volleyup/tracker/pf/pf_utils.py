@@ -74,13 +74,15 @@ def systematic_resample(particles, weights):
 
 def uniform_displacement(particles, img_boundary, const_dist=10):
     """ Displace particle with const_dist in pixel """
+    size = particles[0].size
+    border_offset = (int(size[0] / 2), int(size[1] / 2))
     for p in particles:
         x_old = p.x
         y_old = p.y
         x_new = int(x_old + np.random.uniform(-const_dist, const_dist) + gaussian_noise())
         y_new = int(y_old + np.random.uniform(-const_dist, const_dist) + gaussian_noise())
-        p.x = max(0, min(x_new, img_boundary[0]))
-        p.y = max(0, min(y_new, img_boundary[1]))
+        p.x = max(border_offset[0], min(x_new, img_boundary[0] - border_offset[0]))
+        p.y = max(border_offset[1], min(y_new, img_boundary[1] - border_offset[1]))
         p.region = ((int(p.x - p.size[0]/2), int(p.y - p.size[1])),
                     (int(p.x + p.size[0]/2), int(p.y)))
 
