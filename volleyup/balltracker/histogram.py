@@ -3,18 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 
-video_path = "data\\beachVolleyball1.mov"
-cap = cv2.VideoCapture(video_path)
-
-ret, frame = cap.read()
-hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-hues = frame[:,:,0]
-maximal_peak = max(Counter(hues.ravel()).items(), key = lambda x: x[1])[0]
-rotation = int(90 - maximal_peak)
-filter_width = 15
-
 def imfill(im):
-    h, w, *_ = im.shape
+    h, w, _ = im.shape
     im_floodfill = im.copy()
     mask = np.zeros((h +2, w+2), np.uint8)
     cv2.floodFill(im_floodfill, mask, (0,0), (255, 255, 255))

@@ -99,7 +99,7 @@ class HomoBG:
             ret, frame = video.read()
             if not ret:
                 break
-            cols, rows, *_ = frame.shape
+            cols, rows, _ = frame.shape
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # bgmed_gray = np.zeros((rows, cols))
 
@@ -133,7 +133,7 @@ class HomoBG:
                 continue
             if not ret:
                 break
-            cols, rows, *_ = frame.shape
+            cols, rows, _ = frame.shape
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # bgmed_gray = np.zeros((rows, cols))
 
@@ -151,7 +151,7 @@ class HomoBG:
     def run_frames(self, frames, filter_funct = lambda x: x, startfrom = 0):
         backgrounds_gray = []
         for counter, frame in enumerate(frames):
-            cols, rows, *_ = frame.shape
+            cols, rows, _ = frame.shape
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             mask = 255 - self.court_finder.process_frame(frame)
             pts, homography = self.tracker.track_frame(frame, mask)
@@ -169,7 +169,7 @@ class HomoBG:
 
     def run_frame(self, frame, filter_funct = lambda x: x):
         self.counter += 1
-        cols, rows, *_ = frame.shape
+        cols, rows, _ = frame.shape
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         mask = 255 - self.court_finder.process_frame(frame)
         pts, homography = self.tracker.track_frame(frame, mask)
@@ -184,7 +184,7 @@ class HomoBG:
         return None
 
 class BallFinder:
-    def __init__(self, filter_funct = er_filter, window_size = 5, svm_path = "data/svm/SVM_HN_second.pkl"):
+    def __init__(self, filter_funct = er_filter, window_size = 5, svm_path = "../data/svm/SVM_HN_second.pkl"):
         self.filter_funct = filter_funct
         self.bgsub = HomoBG(window_size = 5)
         self.init_frame()
@@ -235,10 +235,10 @@ if __name__ == "__main__":
     a = HomoBG(window_size = 3)
     #a.run_test()
     startfrom = 0
-    video_path = "data/beachVolleyball4.mov"
-    output_dir = "output/tests/bv3"
-    tt_dir = "data/training_data/bgsub/bv4"
-    svm = joblib.load("data/svm/SVM_HN_second.pkl")
+    video_path = "../data/beachVolleyball4.mov"
+    output_dir = "../output/tests/bv3"
+    tt_dir = "../data/training_data/bgsub/bv4"
+    svm = joblib.load("../data/svm/SVM_HN_second.pkl")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
