@@ -5,8 +5,10 @@ from skimage.feature import hog
 from sklearn.externals import joblib
 import os
 
+
 def subtract(original, deductible):
     return np.uint8((original - np.int32(deductible)).clip(min = 0))
+
 
 def er_filter(image):
     kernel = np.ones((3,3), np.uint8)
