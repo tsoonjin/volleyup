@@ -17,28 +17,6 @@ import matplotlib.pyplot as plt
 
 
 
-def order_points(pts):
-	# initialzie a list of coordinates that will be ordered
-	# such that the first entry in the list is the top-left,
-	# the second entry is the top-right, the third is the
-	# bottom-right, and the fourth is the bottom-left
-	rect = np.zeros((4, 2), dtype = "float32")
-
-	# the top-left point will have the smallest sum, whereas
-	# the bottom-right point will have the largest sum
-	s = pts.sum(axis = 1)
-	rect[0] = pts[np.argmin(s)]
-	rect[2] = pts[np.argmax(s)]
-
-	# now, compute the difference between the points, the
-	# top-right point will have the smallest difference,
-	# whereas the bottom-left will have the largest difference
-	diff = np.diff(pts, axis = 1)
-	rect[1] = pts[np.argmin(diff)]
-	rect[3] = pts[np.argmax(diff)]
-
-	# return the ordered coordinates
-	return rect
 def getMatrixOfFrame(i,cornerdata):
         half = cornerdata[i][1]
         c1x = cornerdata[i][2]
@@ -68,7 +46,7 @@ def getMatrixOfFrame(i,cornerdata):
         source = np.array([
                 [c1x, c1y],
                 [c2x, c2y],
-                [c3x, c2y],
+                [c3x, c3y],
                 [c4x, c4y]], dtype = "float32")
         
         print("source",source)
@@ -88,150 +66,90 @@ def getMatrixOfFrame(i,cornerdata):
                 [172, 138],
                 [650, 138],
                 [650, 610],
-                [172, 610]], dtype = "float32")       
-
-        #dst = np.array([
-         #       [194, 60],
-          #      [439, 137],
-           #     [203, 287],
-            #    [46, 86]], dtype = "float32")        
+                [172, 610]], dtype = "float32")        
         
+        ################################## for sample 2
+        dst = np.array([
+                [521, 171],
+                [521, 730],
+                [204, 735],
+                [204,171]], dtype = "float32")
+
+        dst1 = np.array([
+                [521, 171],
+                [521, 454],
+                [204, 454],
+                [204,171]], dtype = "float32")
+
+        dst0 = np.array([
+                [521, 454],
+                [521, 730],
+                [204, 735],
+                [204,454]], dtype = "float32")
+
+        ################
         
         if half == 2:
+                print("half == 2")
                 M = cv2.getPerspectiveTransform(source, dst)
                 
         if half == 0:
+                print("half == 0")                
                 M = cv2.getPerspectiveTransform(source, dst0)
                 
         if half == 1:
+                print("half == 1")                
                 M = cv2.getPerspectiveTransform(source, dst1)
                 
-        M = cv2.getPerspectiveTransform(source, dst)
+        #M = cv2.getPerspectiveTransform(source, dst)
         
         print ('dest is ',dst)
 
         return M
-def four_point_transform(pts):
-	# obtain a consistent order of the points and unpack them
-	# individually
-	rect = order_points(pts)
-	(tl, tr, br, bl) = rect
-
-	# compute the width of the new image, which will be the
-	# maximum distance between bottom-right and bottom-left
-	# x-coordiates or the top-right and top-left x-coordinates
-	widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-	widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-	maxWidth = max(int(widthA), int(widthB))
-
-	# compute the height of the new image, which will be the
-	# maximum distance between the top-right and bottom-right
-	# y-coordinates or the top-left and bottom-left y-coordinates
-	heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-	heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-	maxHeight = max(int(heightA), int(heightB))
-
-	# now that we have the dimensions of the new image, construct
-	# the set of destination points to obtain a "birds eye view",
-	# (i.e. top-down view) of the image, again specifying points
-	# in the top-left, top-right, bottom-right, and bottom-left
-	# order
-	dst = np.array([
-		[0, 0],
-		[maxWidth - 1, 0],
-		[maxWidth - 1, maxHeight - 1],
-		[0, maxHeight - 1]], dtype = "float32")
-	dst = np.array([
-		[0, 0],
-		[600, 0],
-		[600, 300],
-		[0, 300]], dtype = "float32")
-	print ('dest is ',dst)
-
-	print ('rect',rect)
-
-	# compute the perspective transform matrix and then apply it
-	M = cv2.getPerspectiveTransform(rect, dst)
-	print ("M is",M)
-	return M
-
-
-
-# construct the argument parse and parse the arguments
 
 
 
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--coords",help = "comma seperated list of source points")
-args = vars(ap.parse_args())
-#args["coords"] = "[(205 , 221), (545, 228), (541, 345), (143, 333)]"
-args["coords"] = "[(0 , 0), (632, 0), (632, 300), (0, 300)]"
-#args["coords"] = "[(200 , 0), (600, 100), (300, 300), (0, 150)]"
-#args["coords"] = "[(224,37),(632,126),(200,100,),(-50,75)]"
-pts = np.array(eval(args["coords"]), dtype = "float32")
-print("original",pts)
-#M = four_point_transform(pts)
-#print("original M",M)
 
-#dest = np.array(((-50, -50), (50, -50), (-50, 50), (50, 50)), dtype=np.float32)
-#M = cv2.getPerspectiveTransform(pts, dest)
-
-# initialize the video stream and allow the camera
 print("starting")
-#vs = VideoStream(usePiCamera=-1 > 0).start()
-#time.sleep(2.0)
-
-# initialize the FourCC, video writer, dimensions of the frame, and
-# zeros array
 fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
 writer = None
 (h, w) = (None, None)
 zeros = None
 
-frameNo = 6000
 
 #read player and ball movements, now just simulate
 reader = open('movement.txt')
-x = 100
-y = 100
+
 
 ball = open("ball_v1.txt")
 balldata  = np.genfromtxt(ball, delimiter=",")
 
-playerPos = open("playerpos1.txt")
+playerPos = open("playerpos7.txt")
+#playerpos7
 playerPosdata  = np.genfromtxt(playerPos, delimiter=",")
 
-corner = open('corner2.txt')
+corner = open('cornerData7.txt')
 cornerdata  = np.genfromtxt(corner, delimiter=",")
 ball.close()
 corner.close()
 
 print("balldata",balldata)
 M = getMatrixOfFrame(0,cornerdata)
-#for testing######
-frameNo = 380
-x = balldata[0][1]
-y = balldata[0][2]
-#############
 
-        
-        
+
+
+
+       
 #############
 
 #M =getMatrixOfFrame(0,cornerdata)
 #print("M",M)
 #for i in range(frameNo):
-for i in range(0,14):
+for i in range(0,9):
         M = getMatrixOfFrame(i,cornerdata)
-        ###########
-
-
-
-
-
-        
-        print("frame",i)
+        ###########       
+        print("line:",i)
         print("M",M)
 
         currFrame = cornerdata[i][0]
@@ -242,15 +160,15 @@ for i in range(0,14):
         print("nextFrame",nextFrame)
         print("diff",diff)
 
-
-        new_x = playerPosdata[i][1]
-        new_y = playerPosdata[i][2]        
-        for j in range(0,diff):
-                print ("****************frane:",cornerdata[i][0]+j)
-                	# grab the frame from the video stream and resize it to have a
+        
+        for j in range(0,(diff/5)-1):
+                currentFrame = int(cornerdata[i][0]+(j*5))
+                nextSetFrame = int(cornerdata[i][0]+(j*5)+5)
+                print ("****************frane:",currentFrame)
+                # grab the frame from the video stream and resize it to have a
                 # maximum width of 300 pixels
                         #frame = vs.read()
-                frame = cv2.imread('volley_field.jpg')
+                frame = cv2.imread('sample2.jpg')
                 #frame = cv2.imread('data/beachVolleyball1/1.jpg')
                 #frame = imutils.resize(frame, width=600)
                 # check if the writer is None
@@ -258,44 +176,47 @@ for i in range(0,14):
                         # store the image dimensions, initialzie the video writer,
                         # and construct the zeros array
                         (h, w) = frame.shape[:2]
-                        writer = cv2.VideoWriter("example.avi", fourcc, 10,
+                        writer = cv2.VideoWriter("video7.avi", fourcc, 50,
                                 (w , h ), True)
                         zeros = np.zeros((h, w), dtype="uint8")
                 color1 = (256, 0, 0)
                 color2 = (0, 256, 0)
 
-                x_diff1 = (playerPosdata[i+1][0] - playerPosdata[i][0])/float(diff)
-                y_diff1 = (playerPosdata[i+1][1] - playerPosdata[i][1])/float(diff)
-                
-                x_diff2 = (playerPosdata[i+1][2] - playerPosdata[i][2])/float(diff)
-                y_diff2 = (playerPosdata[i+1][3] - playerPosdata[i][3])/float(diff)
-                
-                x_diff3 = (playerPosdata[i+1][4] - playerPosdata[i][4])/float(diff)
-                y_diff3 = (playerPosdata[i+1][5] - playerPosdata[i][5])/float(diff)
-                
-                x_diff4 = (playerPosdata[i+1][6] - playerPosdata[i][6])/float(diff)
-                y_diff4 = (playerPosdata[i+1][7] - playerPosdata[i][7])/float(diff)
+
 
                 #print("pos nex x",playerPosdata[i+1][0])
                 #print("pos curr x",playerPosdata[i][0])
                 #print("x_diff1",x_diff1)
                 #print("y_diff1",y_diff1)
 
-                currentFrame = cornerdata[i][0]+j
-                new_x1 = playerPosdata[i][0]+ x_diff1*j
-                new_y1 = playerPosdata[i][1]+ y_diff1*j
-                new_x2 = playerPosdata[i][2]+ x_diff2*j
-                new_y2 = playerPosdata[i][3]+ y_diff2*j
-                new_x3 = playerPosdata[i][4]+ x_diff3*j
-                new_y3 = playerPosdata[i][5]+ y_diff3*j
-                new_x4 = playerPosdata[i][6]+ x_diff4*j
-                new_y4 = playerPosdata[i][7]+ y_diff4*j
+                new_x1 = playerPosdata[currentFrame][0]
+                new_y1 = playerPosdata[currentFrame][1]
+                new_x2 = playerPosdata[currentFrame][2]
+                new_y2 = playerPosdata[currentFrame][3]
+                new_x3 = playerPosdata[currentFrame][4]
+                new_y3 = playerPosdata[currentFrame][5]
+                new_x4 = playerPosdata[currentFrame][6]
+                new_y4 = playerPosdata[currentFrame][7]
 
                 pos1 = (new_x1,new_y1)
                 pos2 = (new_x2,new_y2)
                 pos3 = (new_x3,new_y3)
                 pos4 = (new_x4,new_y4)
 
+
+                new1_x1 = playerPosdata[nextSetFrame][0]
+                new1_y1 = playerPosdata[nextSetFrame][1]
+                new1_x2 = playerPosdata[nextSetFrame][2]
+                new1_y2 = playerPosdata[nextSetFrame][3]
+                new1_x3 = playerPosdata[nextSetFrame][4]
+                new1_y3 = playerPosdata[nextSetFrame][5]
+                new1_x4 = playerPosdata[nextSetFrame][6]
+                new1_y4 = playerPosdata[nextSetFrame][7]
+
+                npos1 = (new_x1,new_y1)
+                npos2 = (new_x2,new_y2)
+                npos3 = (new_x3,new_y3)
+                npos4 = (new_x4,new_y4)
                 #print("pos1",pos1)
                 #print("pos2",pos2)
                 #print("pos3",pos3)
@@ -314,27 +235,82 @@ for i in range(0,14):
                 original2 = np.array([(pos3, pos4)], dtype=np.float)
                 converted1 = cv2.perspectiveTransform(original1, M)
                 converted2 = cv2.perspectiveTransform(original2, M)
+
+                noriginal1 = np.array([(npos1, npos2)], dtype=np.float)
+                noriginal2 = np.array([(npos3, npos4)], dtype=np.float)
+                nconverted1 = cv2.perspectiveTransform(noriginal1, M)
+                nconverted2 = cv2.perspectiveTransform(noriginal2, M)
                 #print("converted1",converted1)
-                n1point1 = (int(converted1[0][0].item(0)),int(converted1[0][0].item(1)))
-                n1point2 = (int(converted1[0][1].item(0)),int(converted1[0][1].item(1)))
+                
                 #print("pts1 at",n1point1)
                 #print("pts2 at",n1point2)
-
+                
+                #if int(converted1[0][0].item(1)) < 454:
+                 #       n1point1 = (int(converted1[0][0].item(0)),int(454))
+                #if int(converted1[0][1].item(1)) < 454:
+                 #       n1point2 = (int(converted1[0][0].item(0)),int(454))
 
                 #print("converted2",converted2)
-                n1point3 = (int(converted2[0][0].item(0)),int(converted2[0][0].item(1)))
-                n1point4 = (int(converted2[0][1].item(0)),int(converted2[0][1].item(1)))
+
                 #print("pts3 at",n1point3)
                 #print("pts4 at",n1point4)                
-                
+                #if int(converted2[0][0].item(1)) > 454:
+                 #       n1point3 = (int(converted1[0][0].item(0)),int(454))
+                #if int(converted2[0][1].item(1)) > 454:
+                 #       n1point4 = (int(converted1[0][0].item(0)),int(454))                
                 #cv2.circle(frame, npoint1, 5, color, -1,4,1)
                 #cv2.circle(frame, npoint2, 5, color, -1,4,1)
 
-                cv2.circle(frame, n1point1, 10, color1, -1,4,1)
-                cv2.circle(frame, n1point2, 10, color1, -1,4,1)
-                cv2.circle(frame, n1point3, 10, color2, -1,4,1)
-                cv2.circle(frame, n1point4, 10, color2, -1,4,1)
-                writer.write(frame)
+
+                #final pts in current frame        
+                n1point1 = (int(converted1[0][0].item(0)),int(converted1[0][0].item(1)))
+                n1point2 = (int(converted1[0][1].item(0)),int(converted1[0][1].item(1)))
+                n1point3 = (int(converted2[0][0].item(0)),int(converted2[0][0].item(1)))
+                n1point4 = (int(converted2[0][1].item(0)),int(converted2[0][1].item(1)))
+
+                n2point1 = (int(nconverted1[0][0].item(0)),int(nconverted1[0][0].item(1)))
+                n2point2 = (int(nconverted1[0][1].item(0)),int(nconverted1[0][1].item(1)))
+                n2point3 = (int(nconverted2[0][0].item(0)),int(nconverted2[0][0].item(1)))
+                n2point4 = (int(nconverted2[0][1].item(0)),int(nconverted2[0][1].item(1)))  
+
+                pt1diffx = (n2point1[0] - n1point1[0])/float(diff)
+                pt1diffy = (n2point1[1] - n1point1[1])/float(diff)
+
+                                
+                pt2diffx = (n2point2[0] - n1point2[0])/float(diff)
+                pt2diffy = (n2point2[1] - n1point2[1])/float(diff)
+
+                pt3diffx = (n2point3[0] - n1point3[0])/float(diff)
+                pt3diffy = (n2point3[1] - n1point3[1])/float(diff)
+
+                pt4diffx = (n2point4[0] - n1point4[0])/float(diff)
+                pt4diffy = (n2point4[1] - n1point4[1])/float(diff)
+
+                
+
+
+                
+                n1point1 = (int(converted1[0][0].item(0)),int(converted1[0][0].item(1)))
+                n1point2 = (int(converted1[0][1].item(0)),int(converted1[0][1].item(1)))
+
+                n1point3 = (int(converted2[0][0].item(0)),int(converted2[0][0].item(1)))
+                n1point4 = (int(converted2[0][1].item(0)),int(converted2[0][1].item(1)))
+
+
+
+
+                for k in range(0,j):
+                        result_n1point1 = (int((n1point1[0])+(pt1diffx*k)),int((n1point1[1])+(pt1diffy*k)))
+                        result_n1point2 = (int((n1point2[0])+(pt2diffx*k)),int((n1point2[1])+(pt2diffy*k)))
+                        result_n1point3 = (int((n1point2[0])+(pt3diffx*k)),int((n1point3[1])+(pt3diffy*k)))
+                        result_n1point4 = (int((n1point4[0])+(pt4diffx*k)),int((n1point4[1])+(pt4diffy*k)))
+
+                        
+                        cv2.circle(frame, result_n1point1, 10, color1, -1,4,1)
+                        cv2.circle(frame, result_n1point2, 10, color1, -1,4,1)
+                        cv2.circle(frame, result_n1point3, 10, color2, -1,4,1)
+                        cv2.circle(frame, result_n1point4, 10, color2, -1,4,1)
+                        writer.write(frame)
 
                 # show the frames
                 #cv2.imshow("Frame", frame)
