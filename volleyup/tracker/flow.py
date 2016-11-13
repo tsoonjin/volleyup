@@ -8,6 +8,7 @@ from utils import config
 from utils.utils import draw_str
 from utils.preprocess import contrast_enhance
 
+
 class FarnebackTracker():
     """ Optical flow tracking using Gunner Farneback method """
     def __init__(self, cap):
@@ -39,7 +40,7 @@ class FarnebackTracker():
 class LKTracker():
     """ Optical Flow tracking using Lucas-Kanade method based on sample/python/lk_track.py """
     def __init__(self, cap):
-            self.cap = cap
+        self.cap = cap
         # Config
         self.lk_params = dict(winSize=(15, 15), maxLevel=2,
                               criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
