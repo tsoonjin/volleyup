@@ -1,8 +1,4 @@
-#things to do:
-#determine the 4 corners in the input frame  --to be done after receive input
-#read position frame by frame
-
-# import the necessary packages
+#!/usr/bin/env python
 from __future__ import print_function
 from imutils.video import VideoStream
 import numpy as np
@@ -11,10 +7,6 @@ import imutils
 import time
 import cv2
 import matplotlib.pyplot as plt
-
-
-
-
 
 
 def getMatrixOfFrame(i,cornerdata):
