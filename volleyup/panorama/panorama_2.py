@@ -51,7 +51,7 @@ class TranslationStitcher():
             """
         panorama_img = self.imgs[0]
         resultingHomography = None
-        panorama_img = np.pad(panorama_img, ((200,200),(800,800),(0,0)), mode='constant')
+        panorama_img = np.pad(panorama_img, ((0,200),(500,0),(0,0)), mode='constant')
         imgA = panorama_img.copy()
         panorama_img_list.append(panorama_img.copy())
         for index, imgB in enumerate(self.imgs[1:]):
@@ -90,7 +90,7 @@ class TranslationStitcher():
 def convertToVideo(dirpath, segment, type):
     imgs = get_jpgs(dirpath)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    vw = cv2.VideoWriter("output_" + type + str(segment) + ".mov", fourcc, 60, (imgs[0].shape[1], imgs[0].shape[0]))
+    vw = cv2.VideoWriter("resized_output_" + type + str(segment) + ".mov", fourcc, 60, (imgs[0].shape[1], imgs[0].shape[0]))
     print "VideoWriter is opened:", vw.isOpened()
     print("Writing video ...")
     i = 1
@@ -123,5 +123,4 @@ def stitch(number):
 
 
 if __name__ == '__main__':
-    for i in range(1,8):
-        stitch(i)
+    stitch(7)
