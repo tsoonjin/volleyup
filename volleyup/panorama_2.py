@@ -51,7 +51,15 @@ class TranslationStitcher():
             """
         panorama_img = self.imgs[0]
         resultingHomography = None
-        panorama_img = np.pad(panorama_img, ((0,200),(500,0),(0,0)), mode='constant')
+        
+        # segment 7 is 0,200 500,0
+        # segment 6 is 50,100 0,400
+        # segment 5 is 0,0, 0,0
+        # segment 4 is 150,150 0,1000
+        # segment 3 is 20,100 300,50
+        # segment 2 is 100,200 200,200
+        # segment 1 is 50,50 150,50
+        panorama_img = np.pad(panorama_img, ((50,50),(150,50),(0,0)), mode='constant')
         imgA = panorama_img.copy()
         panorama_img_list.append(panorama_img.copy())
         for index, imgB in enumerate(self.imgs[1:]):
@@ -123,4 +131,4 @@ def stitch(number):
 
 
 if __name__ == '__main__':
-    stitch(7)
+    stitch(1)
