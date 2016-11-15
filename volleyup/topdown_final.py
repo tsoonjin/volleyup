@@ -62,7 +62,7 @@ def getMatrixOfFrame(i,cornerdata):
   
 
 
-################################## for sample 2
+        ################################## for sample 2
         dst = np.array([
                 [521, 171],
                 [521, 730],
@@ -120,6 +120,13 @@ reader = open('movement.txt')
 
 for num in range (1,8):
         print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)
+        print("**********************converting video:    ",num)        
         num1 = str(num)
         playerPos = open("playerpos"+num1+".txt")
         playerPosdata  = np.genfromtxt(playerPos, delimiter=",")
@@ -156,9 +163,9 @@ for num in range (1,8):
                 nextFrame = cornerdata[i+1][0]
                 diff = nextFrame - currFrame
                 diff = int(diff)
-                print("currFrame",currFrame)
-                print("nextFrame",nextFrame)
-                print("diff",diff)
+                #print("currFrame",currFrame)
+                #print("nextFrame",nextFrame)
+                #print("diff",diff)
 
                 new_x1 = playerPosdata[i][0]
                 new_y1 = playerPosdata[i][1]
@@ -200,10 +207,10 @@ for num in range (1,8):
                 noriginal1 = np.array([(npos1, npos2)], dtype=np.float)
                 noriginal2 = np.array([(npos3, npos4)], dtype=np.float)
                 
-                print ("original1",original1)
-                print ("original2",original2)
-                print ("noriginal1",noriginal1)
-                print ("noriginal2",noriginal2)
+                #print ("original1",original1)
+                #print ("original2",original2)
+                #print ("noriginal1",noriginal1)
+                #print ("noriginal2",noriginal2)
 
                 #convert result for p1 p2 in current frame        
                 converted1 = cv2.perspectiveTransform(original1, M)
@@ -263,14 +270,14 @@ for num in range (1,8):
                 if playerPosdata[i+1][6] == -999999:
                         n2point4 = (437,628)
 
-                print("pts1 at",n1point1)
-                print("pts2 at",n1point2)
-                print("pts3 at",n1point3)
-                print("pts4 at",n1point4)
-                print("new next set frame pts1 at",n2point1)
-                print("new next set frame pts2 at",n2point2) 
-                print("new next set frame pts3 at",n2point3)
-                print("new next set frame pts4 at",n2point4)                        
+                #print("pts1 at",n1point1)
+                #print("pts2 at",n1point2)
+                #print("pts3 at",n1point3)
+                #print("pts4 at",n1point4)
+                #print("new next set frame pts1 at",n2point1)
+                #print("new next set frame pts2 at",n2point2) 
+                #print("new next set frame pts3 at",n2point3)
+                #print("new next set frame pts4 at",n2point4)                        
 
                 pt1diffx = (n2point1[0] - n1point1[0])/float(diff)
                 pt1diffy = (n2point1[1] - n1point1[1])/float(diff)
@@ -289,7 +296,7 @@ for num in range (1,8):
 
                 print("diff is",diff)        
                 for j in range(0,diff):
-                        # print ("****************frame:",cornerdata[i][0]+j)
+                        #print ("****************frame:",cornerdata[i][0]+j)
                         frame = cv2.imread('volley_field.jpg')
                         frame = cv2.imread('sample2.jpg')
                         #frame = cv2.imread('data/beachVolleyball1/1.jpg')
@@ -299,7 +306,9 @@ for num in range (1,8):
                                 # store the image dimensions, initialzie the video writer,
                                 # and construct the zeros array
                                 (h, w) = frame.shape[:2]
-                                writer = cv2.VideoWriter("special6.avi", fourcc, 50,
+
+                                print("num",num1)
+                                writer = cv2.VideoWriter("final_video"+num1+".avi", fourcc, 60,
                                         (w , h ), True)
                                 zeros = np.zeros((h, w), dtype="uint8")
                         color1 = (256, 0, 0)
@@ -347,7 +356,7 @@ for num in range (1,8):
                         break
                 if key == ord("p"):
                         time.sleep(10)
-                
+        writer = None
 	
 
 	
