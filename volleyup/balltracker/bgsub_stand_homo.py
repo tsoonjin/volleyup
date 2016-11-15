@@ -193,6 +193,13 @@ class BallFinder:
     def init_frame(self):
         self.bgsub.init_frame()
 
+    def draw_balls(self, frame, canvas):
+        circles = self.run_frame(frame)
+        if circles is not None:
+            for (x,y,r) in circles:
+                cv2.circle(canvas, (x,y), r, (0,0,255), 2)
+        return canvas
+
     def run_frame(self, frame):
         res = self.bgsub.run_frame(frame, filter_funct = self.filter_funct)
         if not res:
@@ -204,7 +211,7 @@ class BallFinder:
         subbed[:, 0:7] = 0
         subbed[295:300, :] = 0
         subbed[250:300, 532:632] = 0
-        cv2.imshow("subbed", subbed)
+        # cv2.imshow("subbed", subbed)
 
         circles = cv2.HoughCircles(subbed, cv2.HOUGH_GRADIENT, 1, 20, param1=100, param2 =10, minRadius =1, maxRadius = 7)
 

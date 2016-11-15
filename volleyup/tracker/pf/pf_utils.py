@@ -72,7 +72,7 @@ def systematic_resample(particles, weights):
 
 # Transition model
 
-def uniform_displacement(particles, img_boundary, const_dist=10):
+def uniform_displacement(particles, img_boundary, const_dist=20):
     """ Displace particle with const_dist in pixel """
     size = particles[0].size
     border_offset = (int(size[0] / 2), int(size[1] / 2))
@@ -89,11 +89,19 @@ def uniform_displacement(particles, img_boundary, const_dist=10):
 
 # Noise model
 
-def gaussian_noise(sigma=0.5):
+def gaussian_noise(sigma=1.0):
     return np.random.normal(0, sigma)
 
 
 # Likelihood
+
+def predict_colormotion(particles, img, ref_hist, detected, img_boundary):
+    p_color = [compare_hsv_hist(get_roi(img, p.region[0], p.region[1]), ref_hist) for p in particles]
+    p_dist = [pos_likelihood(p, detected, img_boundary) for p in particles]
+    for color, dist, p in zip(p_color, p_dist, particles):
+        p.w = color
+        p.w = (0.4 * color) + (0.6 * dist) if detected[0] > 0 and np.mean(p_color) > 0.25 else color
+
 
 def predict_mean_hue(particles, img, ref_hue):
     for p in particles:
@@ -114,6 +122,14 @@ def compare_hsv_hist(img, ref_hist=None):
     """
     p_hist = hsv_histogram(img)
     return 1 - cv2.compareHist(p_hist, ref_hist, cv2.HISTCMP_BHATTACHARYYA)
+
+
+def pos_likelihood(particle, detected, img_boundary):
+    if detected[0] < 0:
+        return 0
+    dist = np.sqrt(((particle.x - detected[0])/img_boundary[0])**2 +
+                   ((particle.y - detected[1])/img_boundary[1])**2)
+    return 1 - dist
 
 
 # Features

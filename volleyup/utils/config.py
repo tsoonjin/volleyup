@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+CSV_DIR = 'data/csv/'
 BG_DIR = 'data/bg/'
 TEMPLATE_DIR = 'data/templates/'
 STUB_DIR = 'data/stub/'
@@ -23,7 +24,7 @@ WHITE = [255, 255, 255]
 BRAZIL = {'color': BLUE}
 USA = {'color': RED}
 LATVIA = {'color': GREEN}
-ESPANYOL = {'color': ORANGE}
+ESPANYOL = {'color': YELLOW}
 
 ''' OBJECT HSV COLOR RANGES '''
 OBJECT_COLOR = {'court': [(20, 0, 100), (50, 100, 255)]}

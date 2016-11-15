@@ -3,6 +3,8 @@ import cv2
 import os
 import numpy as np
 
+import config
+
 from feature import FeatureDescriptor
 from config import OBJECT_COLOR, RESIZE_FACTOR
 
@@ -47,8 +49,7 @@ def get_jpgs(dirpath, skip=0):
 
 def draw_str(dst, target, s):
     x, y = target
-    cv2.putText(dst, s, (x+1, y+1), cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 0, 0), thickness=2)
-    cv2.putText(dst, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.0, (255, 255, 255))
+    cv2.putText(dst, s, (x, y), cv2.FONT_HERSHEY_PLAIN, 0.8, (0, 0, 0), thickness=2)
 
 
 def create_windows(names=['original', 'processed']):
@@ -117,7 +118,7 @@ def get_channel(img, channel):
 def fuse_channels(img):
     """ Returns bgr, hsv and lab channels of image in order """
     return np.vstack((get_bgr_stack(img), get_hsv_stack(img),
-                      get_lab_stack(img), get_ycb_stack(img), get_opp_stack(img)))
+                      get_lab_stack(img), get_ycb_stack(img), get_luv_stack(img)))
 
 
 def get_bgr_stack(img):
@@ -239,3 +240,7 @@ def normalize_bgr(img):
     r /= total_bgr
     return cv2.merge((cv2.convertScaleAbs(b * 255.0), cv2.convertScaleAbs(g * 255.0),
                       cv2.convertScaleAbs(r * 255.0)))
+
+
+def euclidean_dist(p1, p2):
+    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)

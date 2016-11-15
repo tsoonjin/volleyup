@@ -12,7 +12,7 @@ def main():
 
     data = joblib.load(args.input_file)
 
-    joblib.dump(data, args.output_file, args.version)
+    joblib.dump(data, args.output_file, protocol=2)
 
     print("Done!")
 
